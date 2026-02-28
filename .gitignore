@@ -1,0 +1,130 @@
+# ===================================
+# Node.js
+# ===================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# ===================================
+# Build outputs
+# ===================================
+dist/
+build/
+.next/
+out/
+.nuxt/
+.cache/
+.parcel-cache/
+
+# ===================================
+# Environment variables
+# ===================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# ===================================
+# IDE / Editor
+# ===================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# ===================================
+# Testing
+# ===================================
+coverage/
+.nyc_output/
+*.lcov
+.jest/
+test-results/
+
+# ===================================
+# Logs
+# ===================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# ===================================
+# TypeScript
+# ===================================
+*.tsbuildinfo
+.tsbuildinfo
+
+# ===================================
+# Database
+# ===================================
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+# ===================================
+# Docker
+# ===================================
+docker-compose.override.yml
+.dockerignore
+
+# ===================================
+# OS
+# ===================================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ===================================
+# Temporary files
+# ===================================
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# ===================================
+# AWS
+# ===================================
+.aws/
+*.pem
+
+# ===================================
+# Terraform
+# ===================================
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+
+# ===================================
+# Project specific
+# ===================================
+# Documentos de planificación se mantienen
+# Solo ignorar archivos sensibles o temporales
+
+# ===================================
+# Package manager lock files (opcional)
+# Descomentar si no quieres versionar locks
+# ===================================
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
