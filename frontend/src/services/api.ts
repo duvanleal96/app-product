@@ -12,7 +12,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 seconds timeout
+  timeout: 45000, // 45 seconds timeout (para polling de Wompi + procesamiento)
 });
 
 // Request interceptor
@@ -41,11 +41,15 @@ api.interceptors.response.use(
       status: error.response?.status,
       data: error.response?.data,
     });
-    const message = error.response?.data || error.message || 'An error occurred';
+    
+    // Extract message from backend error response
+    const errorData = error.response?.data as any;
+    const message = errorData?.message || error.message || 'An error occurred';
+    
     return Promise.reject({
-      message: typeof message === 'string' ? message : JSON.stringify(message),
+      message: typeof message === 'string' ? message : String(message),
       statusCode: error.response?.status,
-      error: error.response?.statusText || error.message,
+      error: errorData?.error || error.response?.statusText || error.message,
     });
   }
 );

@@ -11,8 +11,20 @@ import {
 import { StepIndicator } from '../components/common/StepIndicator';
 import { ErrorMessage } from '../components/common/ErrorMessage';
 import { applyGradient } from '../theme/colors';
+import { 
+  detectCardInfo, 
+  formatCardNumber, 
+  validateLuhn, 
+  getValidationMessage,
+  isCardTypeAccepted,
+  type CardType 
+} from '../utils/cardDetection';
 
 const CHECKOUT_STEPS = ['Producto', 'Datos', 'Pago', 'Confirmación'];
+
+// Fees configuration
+const BASE_FEE = 5000; // Comisión base: $5,000 COP
+const DELIVERY_FEE = 10000; // Costo de envío: $10,000 COP
 
 export const PaymentPage = () => {
   const navigate = useNavigate();
@@ -22,12 +34,17 @@ export const PaymentPage = () => {
   );
   const { items: cartItems, total } = useAppSelector((state) => state.cart);
 
+  // Calculate totals
+  const subtotal = total;
+  const totalWithFees = subtotal + BASE_FEE + DELIVERY_FEE;
+
   const [localCardInfo, setLocalCardInfo] = useState({
     cardNumber: cardInfo?.cardNumber || '',
     cardHolder: cardInfo?.cardHolder || '',
     cardExpMonth: cardInfo?.cardExpMonth || '',
     cardExpYear: cardInfo?.cardExpYear || '',
     cardCvc: cardInfo?.cardCvc || '',
+    installments: '1', // Número de cuotas, por defecto 1
   });
 
   const [localDeliveryInfo, setLocalDeliveryInfo] = useState({
@@ -40,6 +57,7 @@ export const PaymentPage = () => {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [detectedCardType, setDetectedCardType] = useState<CardType>('unknown');
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('es-CO', {
@@ -52,11 +70,23 @@ export const PaymentPage = () => {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    // Card validation
-    if (!localCardInfo.cardNumber.replace(/\s/g, '')) {
+    // Card validation with smart detection
+    const cleanCardNumber = localCardInfo.cardNumber.replace(/\s/g, '');
+    
+    if (!cleanCardNumber) {
       newErrors.cardNumber = 'El número de tarjeta es requerido';
-    } else if (localCardInfo.cardNumber.replace(/\s/g, '').length !== 16) {
-      newErrors.cardNumber = 'El número de tarjeta debe tener 16 dígitos';
+    } else {
+      // Validar que sea Visa o Mastercard
+      if (!isCardTypeAccepted(cleanCardNumber)) {
+        newErrors.cardNumber = 'Solo aceptamos tarjetas Visa y Mastercard';
+      } else {
+        const validationMessage = getValidationMessage(cleanCardNumber, localCardInfo.cardCvc);
+        if (validationMessage) {
+          newErrors.cardNumber = validationMessage;
+        } else if (!validateLuhn(cleanCardNumber)) {
+          newErrors.cardNumber = 'Número de tarjeta inválido (verificación Luhn falló)';
+        }
+      }
     }
 
     if (!localCardInfo.cardHolder.trim()) {
@@ -71,10 +101,17 @@ export const PaymentPage = () => {
       newErrors.expiryYear = 'El año de expiración es requerido';
     }
 
+    const cardInfo = detectCardInfo(cleanCardNumber);
+    const requiredCvcLength = cardInfo.cvcLength;
+    
     if (!localCardInfo.cardCvc) {
       newErrors.cvv = 'El CVV es requerido';
-    } else if (localCardInfo.cardCvc.length < 3) {
-      newErrors.cvv = 'El CVV debe tener al menos 3 dígitos';
+    } else if (!requiredCvcLength.includes(localCardInfo.cardCvc.length)) {
+      newErrors.cvv = 'El CVV debe tener 3 dígitos';
+    }
+
+    if (!localCardInfo.installments || parseInt(localCardInfo.installments) < 1) {
+      newErrors.installments = 'Debe seleccionar el número de cuotas';
     }
 
     // Delivery validation
@@ -126,6 +163,8 @@ export const PaymentPage = () => {
         customerId,
         productId: cartItems[0].product.id,
         quantity: cartItems[0].quantity,
+        baseFee: BASE_FEE,
+        deliveryFee: DELIVERY_FEE,
       })
     );
 
@@ -135,7 +174,12 @@ export const PaymentPage = () => {
         processPayment({
           transactionId: transactionResult.payload.id,
           paymentData: {
-            ...localCardInfo,
+            cardNumber: localCardInfo.cardNumber.replace(/\s/g, ''), // Remove spaces
+            cardExpMonth: localCardInfo.cardExpMonth,
+            cardExpYear: localCardInfo.cardExpYear.slice(-2), // Convert YYYY to YY
+            cardCvc: localCardInfo.cardCvc,
+            cardHolder: localCardInfo.cardHolder,
+            installments: parseInt(localCardInfo.installments) || 1, // Número de cuotas
             deliveryInfo: {
               fullName: localDeliveryInfo.fullName,
               phone: localDeliveryInfo.phone,
@@ -149,6 +193,16 @@ export const PaymentPage = () => {
       );
 
       if (processPayment.fulfilled.match(paymentResult)) {
+        // Log de la respuesta para debugging
+        console.log('=== RESPUESTA DE WOMPI ===');
+        console.log('Transaction:', paymentResult.payload);
+        if (paymentResult.payload.wompiDetails) {
+          console.log('Wompi Details:', paymentResult.payload.wompiDetails);
+          console.log('Status:', paymentResult.payload.wompiDetails.status);
+          console.log('Status Message:', paymentResult.payload.wompiDetails.status_message);
+        }
+        console.log('========================');
+        
         dispatch(setStep(4));
         navigate('/result');
       }
@@ -156,9 +210,19 @@ export const PaymentPage = () => {
   };
 
   const handleCardNumberChange = (value: string) => {
-    // Remove non-digits and format with spaces
+    // Remove non-digits
     const digitsOnly = value.replace(/\D/g, '');
-    const formatted = digitsOnly.match(/.{1,4}/g)?.join(' ') || digitsOnly;
+    
+    // Limit to 19 digits (max for any card type)
+    const limited = digitsOnly.slice(0, 19);
+    
+    // Detect card type
+    const cardInfo = detectCardInfo(limited);
+    setDetectedCardType(cardInfo.type);
+    
+    // Format with spaces
+    const formatted = formatCardNumber(limited);
+    
     setLocalCardInfo((prev) => ({ ...prev, cardNumber: formatted }));
     if (errors.cardNumber) {
       setErrors((prev) => ({ ...prev, cardNumber: '' }));
@@ -205,7 +269,16 @@ export const PaymentPage = () => {
           <h2 className="text-2xl font-bold text-gray-800 mb-1">
             Pago y Entrega
           </h2>
-          <p className="text-gray-500 text-xs">Completa los datos</p>
+          <p className="text-gray-500 text-xs mb-3">Completa los datos</p>
+          
+          {/* Supported Cards */}
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            <span className="text-xs text-gray-500">Aceptamos:</span>
+            <div className="flex gap-2">
+              <span className="text-sm px-2 py-1 bg-blue-50 text-blue-700 rounded font-semibold">Visa</span>
+              <span className="text-sm px-2 py-1 bg-red-50 text-red-700 rounded font-semibold">Mastercard</span>
+            </div>
+          </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-lg p-5">
@@ -218,16 +291,44 @@ export const PaymentPage = () => {
                     <label className="block text-xs font-medium text-gray-700 mb-1">
                       Número de Tarjeta
                     </label>
-                    <input
-                      type="text"
-                      maxLength={19}
-                      value={localCardInfo.cardNumber}
-                      onChange={(e) => handleCardNumberChange(e.target.value)}
-                      className={`w-full px-3 py-2 rounded-md border ${errors.cardNumber ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm font-mono`}
-                      placeholder="1234 5678 9012 3456"
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        maxLength={23}
+                        value={localCardInfo.cardNumber}
+                        onChange={(e) => handleCardNumberChange(e.target.value)}
+                        className={`w-full px-3 py-2 pr-24 rounded-md border ${errors.cardNumber ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm font-mono`}
+                        placeholder="1234 5678 9012 3456"
+                      />
+                      {/* Card Type Indicator */}
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                        {detectedCardType !== 'unknown' && (
+                          <>
+                            <span className="text-lg">{detectCardInfo(localCardInfo.cardNumber).icon}</span>
+                            <span 
+                              className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                              style={{ 
+                                backgroundColor: detectCardInfo(localCardInfo.cardNumber).color + '20',
+                                color: detectCardInfo(localCardInfo.cardNumber).color
+                              }}
+                            >
+                              {detectCardInfo(localCardInfo.cardNumber).name}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
                     {errors.cardNumber && (
                       <p className="text-red-500 text-xs mt-0.5">{errors.cardNumber}</p>
+                    )}
+                    {/* Validation hint */}
+                    {localCardInfo.cardNumber && !errors.cardNumber && (
+                      <p className="text-xs mt-1 text-gray-500">
+                        {detectedCardType !== 'unknown' 
+                          ? `${detectCardInfo(localCardInfo.cardNumber).name} detectada`
+                          : 'Ingrese un número válido'
+                        }
+                      </p>
                     )}
                   </div>
 
@@ -328,6 +429,36 @@ export const PaymentPage = () => {
                         <p className="text-red-500 text-xs mt-0.5">{errors.cvv}</p>
                       )}
                     </div>
+                  </div>
+
+                  {/* Installments (Cuotas) */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Número de Cuotas
+                    </label>
+                    <select
+                      value={localCardInfo.installments}
+                      onChange={(e) =>
+                        setLocalCardInfo((prev) => ({
+                          ...prev,
+                          installments: e.target.value,
+                        }))
+                      }
+                      className={`w-full px-3 py-2 rounded-md border ${errors.installments ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm`}
+                    >
+                      <option value="1">1 cuota (Pago único)</option>
+                      <option value="2">2 cuotas</option>
+                      <option value="3">3 cuotas</option>
+                      <option value="6">6 cuotas</option>
+                      <option value="9">9 cuotas</option>
+                      <option value="12">12 cuotas</option>
+                      <option value="18">18 cuotas</option>
+                      <option value="24">24 cuotas</option>
+                      <option value="36">36 cuotas</option>
+                    </select>
+                    {errors.installments && (
+                      <p className="text-red-500 text-xs mt-0.5">{errors.installments}</p>
+                    )}
                   </div>
 
                 <div className="border-t border-gray-200 my-3"></div>
@@ -463,17 +594,39 @@ export const PaymentPage = () => {
 
                   {/* Resumen de compra */}
                 <div className="p-3 bg-gray-50 rounded-md mt-3">
-                  <h3 className="text-xs font-medium text-gray-700 mb-2">Resumen</h3>
+                  <h3 className="text-xs font-medium text-gray-700 mb-2">Resumen de Compra</h3>
+                  
+                  {/* Items */}
                   {cartItems.map((item) => (
                     <div key={item.product.id} className="text-xs text-gray-600 mb-1 flex justify-between">
                       <span>{item.product.name} (x{item.quantity})</span>
                       <span className="font-medium">{formatPrice(item.product.price * item.quantity)}</span>
                     </div>
                   ))}
+                  
+                  {/* Subtotal */}
+                  <div className="text-xs text-gray-600 mb-1 flex justify-between pt-2 border-t border-gray-200">
+                    <span>Subtotal:</span>
+                    <span className="font-medium">{formatPrice(subtotal)}</span>
+                  </div>
+                  
+                  {/* Comisión Base */}
+                  <div className="text-xs text-gray-600 mb-1 flex justify-between">
+                    <span>Comisión base:</span>
+                    <span className="font-medium">{formatPrice(BASE_FEE)}</span>
+                  </div>
+                  
+                  {/* Costo de Envío */}
+                  <div className="text-xs text-gray-600 mb-1 flex justify-between">
+                    <span>Costo de envío:</span>
+                    <span className="font-medium">{formatPrice(DELIVERY_FEE)}</span>
+                  </div>
+                  
+                  {/* Total */}
                   <div className="border-t border-gray-300 mt-2 pt-2 flex justify-between text-sm font-bold">
-                    <span>Total:</span>
+                    <span>Total a Pagar:</span>
                     <span className="text-blue-600">
-                      {formatPrice(total + 10000)}
+                      {formatPrice(totalWithFees)}
                     </span>
                   </div>
                 </div>

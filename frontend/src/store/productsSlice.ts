@@ -25,7 +25,7 @@ export const fetchProducts = createAsyncThunk(
       return await productsApi.getAvailable();
     } catch (error: unknown) {
       console.error('fetchProducts error:', error);
-      const message = error instanceof Error ? error.message : 'Failed to fetch products';
+      const message = (error as any)?.message || 'Failed to fetch products';
       return rejectWithValue(message);
     }
   }
@@ -38,7 +38,7 @@ export const fetchProductById = createAsyncThunk(
       return await productsApi.getById(id);
     } catch (error: unknown) {
       console.error('fetchProductById error:', error);
-      const message = error instanceof Error ? error.message : 'Failed to fetch product';
+      const message = (error as any)?.message || 'Failed to fetch product';
       return rejectWithValue(message);
     }
   }

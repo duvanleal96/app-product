@@ -49,6 +49,11 @@ export class ProductService {
     return this.productRepository.delete(id);
   }
 
+  /**
+   * Reduce el stock de un producto restando la cantidad especificada
+   * @param id - ID del producto
+   * @param quantity - Cantidad a restar del stock actual
+   */
   async updateStock(id: string, quantity: number): Promise<Product> {
     const product = await this.findById(id);
 
@@ -56,9 +61,15 @@ export class ProductService {
       throw new Error(`Insufficient stock for product ${product.name}`);
     }
 
-    return this.productRepository.updateStock(id, quantity);
+    const newStock = product.stock - quantity;
+    return this.productRepository.updateStock(id, newStock);
   }
 
+  /**
+   * Reduce el stock de un producto (alias de updateStock)
+   * @param id - ID del producto
+   * @param quantity - Cantidad a restar del stock actual
+   */
   async reduceStock(id: string, quantity: number): Promise<Product> {
     const product = await this.findById(id);
 

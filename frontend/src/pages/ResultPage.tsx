@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { clearCart } from '../store/cartSlice';
@@ -12,6 +12,7 @@ export const ResultPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { transaction, loading } = useAppSelector((state) => state.checkout);
+  const [showWompiDetails, setShowWompiDetails] = useState(false);
 
   useEffect(() => {
     // Clear cart on successful transaction
@@ -151,6 +152,49 @@ export const ResultPage = () => {
               </div>
             </div>
           </div>
+
+          {/* Wompi Details (Debugging) */}
+          {transaction.wompiDetails && (
+            <div className="bg-gray-50 rounded-lg p-6 mb-8 text-left">
+              <button
+                onClick={() => setShowWompiDetails(!showWompiDetails)}
+                className="w-full flex justify-between items-center text-left mb-4"
+              >
+                <h2 className="text-xl font-bold text-gray-900">
+                  🔍 Detalles Técnicos de Wompi
+                </h2>
+                <span className="text-2xl">{showWompiDetails ? '▼' : '▶'}</span>
+              </button>
+              
+              {showWompiDetails && (
+                <div className="space-y-3">
+                  <div className="bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="mb-2"><strong>Estado:</strong> {transaction.wompiDetails.status}</div>
+                    <div className="mb-2"><strong>ID de Transacción:</strong> {transaction.wompiDetails.id}</div>
+                    <div className="mb-2"><strong>Referencia:</strong> {transaction.wompiDetails.reference}</div>
+                    <div className="mb-2"><strong>Monto:</strong> ${(transaction.wompiDetails.amount_in_cents / 100).toLocaleString('es-CO')}</div>
+                    <div className="mb-2"><strong>Moneda:</strong> {transaction.wompiDetails.currency}</div>
+                    <div className="mb-2"><strong>Método de pago:</strong> {transaction.wompiDetails.payment_method?.type}</div>
+                    {transaction.wompiDetails.status_message && (
+                      <div className="mb-2"><strong>Mensaje:</strong> {transaction.wompiDetails.status_message}</div>
+                    )}
+                    {transaction.wompiDetails.payment_method_type && (
+                      <div className="mb-2"><strong>Tipo de tarjeta:</strong> {transaction.wompiDetails.payment_method_type}</div>
+                    )}
+                  </div>
+                  
+                  <details className="bg-white rounded-lg p-4 border border-gray-200">
+                    <summary className="cursor-pointer font-semibold text-gray-700 hover:text-gray-900">
+                      Ver respuesta completa (JSON)
+                    </summary>
+                    <pre className="mt-3 text-xs bg-gray-900 text-green-400 p-4 rounded overflow-x-auto">
+                      {JSON.stringify(transaction.wompiDetails, null, 2)}
+                    </pre>
+                  </details>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex gap-4 justify-center">

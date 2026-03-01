@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Transaction } from './domain/entities/transaction.entity';
 import { TransactionService } from './application/transaction.service';
 import { TransactionController } from './infrastructure/controllers/transaction.controller';
+import { WebhookController } from './infrastructure/controllers/webhook.controller';
 import { TransactionRepository } from './infrastructure/persistence/transaction.repository';
 import { TRANSACTION_REPOSITORY } from './domain/repositories/transaction.repository.interface';
 import { ProductsModule } from '../products/products.module';
@@ -15,7 +16,7 @@ import { WompiService } from './infrastructure/wompi/wompi.service';
     ProductsModule,
     CustomersModule,
   ],
-  controllers: [TransactionController],
+  controllers: [TransactionController, WebhookController],
   providers: [
     TransactionService,
     WompiService,

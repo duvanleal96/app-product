@@ -1,77 +1,15 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
 import { LoggerService } from '../../../shared/infrastructure/logger/logger.service';
 import { ErrorCode } from '../../../shared/domain/error-codes.enum';
 import { CustomException } from '../../../shared/infrastructure/exceptions/custom-exception';
 import { wompiConfig } from '../../../config/wompi.config';
 import * as crypto from 'crypto';
-
-export interface WompiPaymentSource {
-  type: 'CARD';
-  token: string;
-  customer_email: string;
-  acceptance_token: string;
-}
-
-export interface WompiTransactionRequest {
-  amount_in_cents: number;
-  currency: string;
-  customer_email: string;
-  payment_method: {
-    type: string;
-    token: string;
-    installments: number;
-  };
-  reference: string;
-  customer_data?: {
-    phone_number?: string;
-    full_name?: string;
-  };
-  redirect_url?: string;
-}
-
-export interface WompiTransactionResponse {
-  data: {
-    id: string;
-    created_at: string;
-    amount_in_cents: number;
-    reference: string;
-    customer_email: string;
-    currency: string;
-    payment_method_type: string;
-    payment_method: any;
-    status: string;
-    status_message: string;
-    billing_data: any;
-    shipping_address: any;
-    redirect_url: string;
-    payment_source_id: string;
-    payment_link_id: string;
-    customer_data: any;
-  };
-}
-
-export interface WompiTokenizeCardRequest {
-  number: string;
-  cvc: string;
-  exp_month: string;
-  exp_year: string;
-  card_holder: string;
-}
-
-export interface WompiTokenizeCardResponse {
-  data: {
-    id: string;
-    created_at: string;
-    brand: string;
-    name: string;
-    last_four: string;
-    bin: string;
-    exp_year: string;
-    exp_month: string;
-    card_holder: string;
-    expires_at: string;
-  };
-}
+import type {
+  WompiTransactionRequest,
+  WompiTransactionResponse,
+  WompiTokenizeCardRequest,
+  WompiTokenizeCardResponse,
+} from './wompi.interfaces';
 
 @Injectable()
 export class WompiService {
@@ -223,9 +161,7 @@ export class WompiService {
         },
         body: JSON.stringify({
           ...transactionData,
-          signature: {
-            integrity: signature,
-          },
+          signature: signature,
         }),
       });
 
@@ -322,6 +258,49 @@ export class WompiService {
   }
 
   /**
+   * Espera y consulta el estado de una transacción con reintentos
+   * Útil para transacciones en Sandbox que inicialmente quedan PENDING
+   */
+  async waitForTransactionStatus(
+    transactionId: string,
+    maxRetries = 5,
+    delayMs = 2000,
+  ): Promise<WompiTransactionResponse> {
+    this.logger.log(
+      `Waiting for transaction ${transactionId} to complete (max ${maxRetries} retries, ${delayMs}ms delay)`,
+    );
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      // Esperar antes de consultar (excepto en el primer intento)
+      if (attempt > 1) {
+        this.logger.log(
+          `Attempt ${attempt}/${maxRetries} - Waiting ${delayMs}ms before checking transaction ${transactionId}`,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+      }
+
+      const transaction = await this.getTransaction(transactionId);
+      this.logger.log(
+        `Transaction ${transactionId} status: ${transaction.data.status} (attempt ${attempt}/${maxRetries})`,
+      );
+
+      // Si la transacción ya no está PENDING, retornarla
+      if (transaction.data.status !== 'PENDING') {
+        this.logger.log(
+          `Transaction ${transactionId} completed with status: ${transaction.data.status}`,
+        );
+        return transaction;
+      }
+    }
+
+    // Si después de todos los intentos sigue PENDING, retornar el último estado
+    this.logger.warn(
+      `Transaction ${transactionId} still PENDING after ${maxRetries} attempts`,
+    );
+    return await this.getTransaction(transactionId);
+  }
+
+  /**
    * Genera la firma de integridad para una transacción
    */
   private generateIntegritySignature(
@@ -343,22 +322,59 @@ export class WompiService {
   }
 
   /**
-   * Verifica la firma de un evento de webhook
+   * Verifica la firma de un evento de webhook según la documentación de Wompi
+   * 
+   * Pasos según Wompi:
+   * 1. Concatenar los valores de los campos especificados en signature.properties
+   * 2. Concatenar el timestamp
+   * 3. Concatenar el secreto de eventos
+   * 4. Calcular SHA256 del resultado
+   * 5. Comparar con signature.checksum (o header X-Event-Checksum)
    */
-  verifyEventSignature(eventData: any, receivedSignature: string): boolean {
+  verifyEventSignature(eventData: any, receivedChecksum?: string): boolean {
     this.logger.logMethodEntry('verifyEventSignature');
 
     try {
-      const concatenatedString = `${eventData.event}${eventData.data.transaction.id}${eventData.sent_at}${wompiConfig.eventsSecret}`;
-      const expectedSignature = crypto
-        .createHash('sha256')
-        .update(concatenatedString)
-        .digest('hex');
+      // Extraer el checksum recibido (del header o del body)
+      const checksum = receivedChecksum || eventData.signature.checksum;
 
-      const isValid = expectedSignature === receivedSignature;
+      if (!checksum) {
+        this.logger.warn('No checksum provided for verification');
+        return false;
+      }
+
+      // Paso 1: Concatenar los valores de las propiedades especificadas
+      let concatenatedValues = '';
+      const properties = eventData.signature.properties || [];
+
+      for (const propertyPath of properties) {
+        // propertyPath es algo como "transaction.id" o "transaction.status"
+        const value = this.getNestedProperty(eventData.data, propertyPath);
+        concatenatedValues += value;
+      }
+
+      // Paso 2: Concatenar el timestamp
+      concatenatedValues += eventData.timestamp;
+
+      // Paso 3: Concatenar el secreto de eventos
+      concatenatedValues += wompiConfig.eventsSecret;
+
+      this.logger.debug(`Concatenated string for signature: ${concatenatedValues}`);
+
+      // Paso 4: Calcular SHA256
+      const expectedChecksum = crypto
+        .createHash('sha256')
+        .update(concatenatedValues)
+        .digest('hex')
+        .toUpperCase(); // Wompi usa uppercase
+
+      // Paso 5: Comparar
+      const isValid = expectedChecksum === checksum.toUpperCase();
 
       if (!isValid) {
         this.logger.warn('Event signature verification failed');
+        this.logger.warn(`Expected: ${expectedChecksum}`);
+        this.logger.warn(`Received: ${checksum}`);
       } else {
         this.logger.log('Event signature verified successfully');
       }
@@ -374,5 +390,13 @@ export class WompiService {
       );
       return false;
     }
+  }
+
+  /**
+   * Helper para obtener valores anidados de un objeto usando path notation
+   * Ej: "transaction.id" retorna eventData.transaction.id
+   */
+  private getNestedProperty(obj: any, path: string): any {
+    return path.split('.').reduce((current, prop) => current?.[prop], obj);
   }
 }

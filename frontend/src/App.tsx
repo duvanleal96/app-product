@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Header } from './components/common/Header';
 import { ProductListPage } from './pages/ProductListPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
+import { CartPage } from './pages/CartPage';
 import { CustomerInfoPage } from './pages/CustomerInfoPage';
 import { PaymentPage } from './pages/PaymentPage';
 import { ResultPage } from './pages/ResultPage';
@@ -19,6 +20,7 @@ function App() {
         <Routes>
           <Route path="/" element={<ProductListPage />} />
           <Route path="/product/:id" element={<ProductDetailPage />} />
+          <Route path="/cart" element={<CartPage />} />
           <Route path="/customer-info" element={<CustomerInfoPage />} />
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/result" element={<ResultPage />} />

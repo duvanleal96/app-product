@@ -19,6 +19,7 @@ interface CheckoutState {
     cardExpYear: string;
     cardCvc: string;
     cardHolder: string;
+    installments?: string;
   } | null;
   transaction: Transaction | null;
   loading: boolean;
@@ -40,22 +41,38 @@ const initialState: CheckoutState = {
 // Async thunks
 export const createCustomer = createAsyncThunk(
   'checkout/createCustomer',
-  async (customerData: CreateCustomerDto) => {
-    return await customersApi.create(customerData);
+  async (customerData: CreateCustomerDto, { rejectWithValue }) => {
+    try {
+      // Usa findOrCreate para permitir múltiples compras con el mismo email
+      return await customersApi.findOrCreate(customerData);
+    } catch (error: unknown) {
+      const message = (error as any)?.message || 'Failed to create customer';
+      return rejectWithValue(message);
+    }
   }
 );
 
 export const createTransaction = createAsyncThunk(
   'checkout/createTransaction',
-  async (transactionData: CreateTransactionDto) => {
-    return await transactionsApi.create(transactionData);
+  async (transactionData: CreateTransactionDto, { rejectWithValue }) => {
+    try {
+      return await transactionsApi.create(transactionData);
+    } catch (error: unknown) {
+      const message = (error as any)?.message || 'Failed to create transaction';
+      return rejectWithValue(message);
+    }
   }
 );
 
 export const processPayment = createAsyncThunk(
   'checkout/processPayment',
-  async ({ transactionId, paymentData }: { transactionId: string; paymentData: ProcessPaymentDto }) => {
-    return await transactionsApi.processPayment(transactionId, paymentData);
+  async ({ transactionId, paymentData }: { transactionId: string; paymentData: ProcessPaymentDto }, { rejectWithValue }) => {
+    try {
+      return await transactionsApi.processPayment(transactionId, paymentData);
+    } catch (error: unknown) {
+      const message = (error as any)?.message || 'Payment failed';
+      return rejectWithValue(message);
+    }
   }
 );
 
@@ -77,6 +94,7 @@ const checkoutSlice = createSlice({
         cardExpYear: string;
         cardCvc: string;
         cardHolder: string;
+        installments?: string;
       }>
     ) => {
       state.cardInfo = action.payload;
@@ -112,7 +130,7 @@ const checkoutSlice = createSlice({
       })
       .addCase(createCustomer.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Failed to create customer';
+        state.error = (action.payload as string) || action.error.message || 'Failed to create customer';
       })
       // Create transaction
       .addCase(createTransaction.pending, (state) => {
@@ -125,7 +143,7 @@ const checkoutSlice = createSlice({
       })
       .addCase(createTransaction.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Failed to create transaction';
+        state.error = (action.payload as string) || action.error.message || 'Failed to create transaction';
       })
       // Process payment
       .addCase(processPayment.pending, (state) => {
@@ -138,7 +156,7 @@ const checkoutSlice = createSlice({
       })
       .addCase(processPayment.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Payment failed';
+        state.error = (action.payload as string) || action.error.message || 'Payment failed';
       });
   },
 });
