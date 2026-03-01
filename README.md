@@ -1,6 +1,6 @@
-# 🛒 E-commerce con Pago - Plan Express 3 Días
+# 🛒 E-commerce con Pago
 
-> App e-commerce con integración de pagos Wompi. Objetivo: **100+ puntos en 72 horas**.
+> App e-commerce con integración de pagos
 
 [![Backend](https://img.shields.io/badge/Backend-NestJS-E0234E?logo=nestjs)](https://nestjs.com/)
 [![Frontend](https://img.shields.io/badge/Frontend-React-61DAFB?logo=react)](https://reactjs.org/)
