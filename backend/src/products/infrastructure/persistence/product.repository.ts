@@ -55,13 +55,13 @@ export class ProductRepository implements IProductRepository {
     await this.repository.delete(id);
   }
 
-  async updateStock(id: string, quantity: number): Promise<Product> {
+  async updateStock(id: string, newStock: number): Promise<Product> {
     const product = await this.findById(id);
     if (!product) {
       throw new Error('Product not found');
     }
 
-    product.stock = product.stock - quantity;
+    product.stock = newStock; // Setear el nuevo stock (no restar)
     return this.repository.save(product);
   }
 }

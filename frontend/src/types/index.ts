@@ -51,6 +51,7 @@ export interface Transaction {
   paidAt?: string;
   createdAt: string;
   updatedAt: string;
+  wompiDetails?: Record<string, unknown>; // Detalles completos de la respuesta de Wompi
 }
 
 export type TransactionStatus = 'PENDING' | 'APPROVED' | 'DECLINED' | 'ERROR' | 'VOIDED';
@@ -79,6 +80,7 @@ export interface ProcessPaymentDto {
   cardExpYear: string;
   cardCvc: string;
   cardHolder: string;
+  installments?: number;
   deliveryInfo: DeliveryInfo;
 }
 

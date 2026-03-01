@@ -13,6 +13,11 @@ export const customersApi = {
     return response.data;
   },
 
+  findOrCreate: async (data: CreateCustomerDto): Promise<Customer> => {
+    const response = await api.post<Customer>('/customers/find-or-create', data);
+    return response.data;
+  },
+
   getById: async (id: string): Promise<Customer> => {
     const response = await api.get<Customer>(`/customers/${id}`);
     return response.data;
@@ -37,6 +42,13 @@ export const transactionsApi = {
     const response = await api.post<Transaction>(
       `/transactions/${id}/process-payment`,
       data
+    );
+    return response.data;
+  },
+
+  syncPaymentStatus: async (id: string): Promise<Transaction> => {
+    const response = await api.post<Transaction>(
+      `/transactions/${id}/sync-status`
     );
     return response.data;
   },

@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsObject, IsNotEmpty, Matches, MinLength } from 'class-validator';
+import { IsString, IsOptional, IsObject, IsNotEmpty, Matches, MinLength, IsInt, Min, Max } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class ProcessPaymentDto {
   @IsString()
@@ -25,6 +26,13 @@ export class ProcessPaymentDto {
   @IsNotEmpty()
   @MinLength(2, { message: 'Card holder name must have at least 2 characters' })
   cardHolder: string;
+
+  @IsInt()
+  @Type(() => Number)
+  @Min(1, { message: 'Installments must be at least 1' })
+  @Max(36, { message: 'Installments cannot exceed 36' })
+  @IsOptional()
+  installments?: number;
 
   @IsObject()
   @IsOptional()

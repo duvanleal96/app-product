@@ -44,6 +44,25 @@ export class CustomerService {
     return this.customerRepository.create(createCustomerDto);
   }
 
+  /**
+   * Busca un customer por email, si existe lo devuelve, si no existe lo crea
+   * Este método permite que un mismo usuario haga múltiples compras
+   */
+  async findOrCreate(createCustomerDto: CreateCustomerDto): Promise<Customer> {
+    const existingCustomer = await this.findByEmail(createCustomerDto.email);
+    
+    if (existingCustomer) {
+      // Si el customer ya existe, actualizamos sus datos con la nueva información
+      return this.customerRepository.update(
+        existingCustomer.id,
+        createCustomerDto,
+      );
+    }
+
+    // Si no existe, creamos uno nuevo
+    return this.customerRepository.create(createCustomerDto);
+  }
+
   async update(
     id: string,
     updateCustomerDto: UpdateCustomerDto,

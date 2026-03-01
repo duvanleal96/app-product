@@ -26,6 +26,11 @@ export class CustomerController {
     return this.customerService.findById(id);
   }
 
+  @Post('find-or-create')
+  async findOrCreate(@Body() createCustomerDto: CreateCustomerDto) {
+    return this.customerService.findOrCreate(createCustomerDto);
+  }
+
   @Post()
   async create(@Body() createCustomerDto: CreateCustomerDto) {
     return this.customerService.create(createCustomerDto);

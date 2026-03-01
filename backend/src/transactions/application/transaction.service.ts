@@ -1,8 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  HttpStatus,
-} from '@nestjs/common';
+import { Inject, Injectable, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { ITransactionRepository } from '../domain/repositories/transaction.repository.interface';
 import { TRANSACTION_REPOSITORY } from '../domain/repositories/transaction.repository.interface';
@@ -93,9 +89,14 @@ export class TransactionService {
   async findByCustomerId(customerId: string): Promise<Transaction[]> {
     this.logger.logMethodEntry('findByCustomerId', { customerId });
     try {
-      const transactions = await this.transactionRepository.findByCustomerId(customerId);
-      this.logger.log(`Found ${transactions.length} transactions for customer ${customerId}`);
-      this.logger.logMethodExit('findByCustomerId', { count: transactions.length });
+      const transactions =
+        await this.transactionRepository.findByCustomerId(customerId);
+      this.logger.log(
+        `Found ${transactions.length} transactions for customer ${customerId}`,
+      );
+      this.logger.logMethodExit('findByCustomerId', {
+        count: transactions.length,
+      });
       return transactions;
     } catch (error) {
       this.logger.error(
@@ -115,8 +116,11 @@ export class TransactionService {
   async findByStatus(status: string): Promise<Transaction[]> {
     this.logger.logMethodEntry('findByStatus', { status });
     try {
-      const transactions = await this.transactionRepository.findByStatus(status);
-      this.logger.log(`Found ${transactions.length} transactions with status ${status}`);
+      const transactions =
+        await this.transactionRepository.findByStatus(status);
+      this.logger.log(
+        `Found ${transactions.length} transactions with status ${status}`,
+      );
       this.logger.logMethodExit('findByStatus', { count: transactions.length });
       return transactions;
     } catch (error) {
@@ -138,7 +142,7 @@ export class TransactionService {
     createTransactionDto: CreateTransactionDto,
   ): Promise<Transaction> {
     this.logger.logMethodEntry('create', createTransactionDto);
-    
+
     try {
       const { productId, customerId, quantity, baseFee, deliveryFee } =
         createTransactionDto;
@@ -163,7 +167,8 @@ export class TransactionService {
       const unitPrice = Number(product.price);
       const subtotal = unitPrice * quantity;
       const finalBaseFee =
-        baseFee || (this.configService.get<number>('fees.baseFee') ?? 2000) / 100;
+        baseFee ||
+        (this.configService.get<number>('fees.baseFee') ?? 2000) / 100;
       const finalDeliveryFee =
         deliveryFee ||
         (this.configService.get<number>('fees.deliveryFee') ?? 5000) / 100;
@@ -183,7 +188,7 @@ export class TransactionService {
 
       this.logger.log(`Transaction created successfully: ${transaction.id}`);
       this.logger.logMethodExit('create', { transactionId: transaction.id });
-      
+
       return transaction;
     } catch (error) {
       if (error instanceof CustomException) {
@@ -218,7 +223,9 @@ export class TransactionService {
 
       // Validar que no esté ya procesada
       if (transaction.status !== TransactionStatus.PENDING) {
-        this.logger.warn(`Transaction ${transactionId} already processed with status: ${transaction.status}`);
+        this.logger.warn(
+          `Transaction ${transactionId} already processed with status: ${transaction.status}`,
+        );
         throw new CustomException(
           ErrorCode.TRANSACTION_ALREADY_PROCESSED,
           { currentStatus: transaction.status },
@@ -227,7 +234,7 @@ export class TransactionService {
       }
 
       this.logger.log(`Tokenizing card for transaction ${transactionId}`);
-      
+
       // Tokenizar la tarjeta con Wompi
       const cardToken = await this.wompiService.tokenizeCard({
         number: paymentDto.cardNumber,
@@ -237,25 +244,32 @@ export class TransactionService {
         card_holder: paymentDto.cardHolder,
       });
 
-      this.logger.log(`Card tokenized successfully for transaction ${transactionId}`);
-      this.logger.log(`Getting acceptance token for transaction ${transactionId}`);
+      this.logger.log(
+        `Card tokenized successfully for transaction ${transactionId}`,
+      );
+      this.logger.log(
+        `Getting acceptance token for transaction ${transactionId}`,
+      );
 
       // Obtener token de aceptación
       const acceptanceToken = await this.wompiService.getAcceptanceToken();
 
-      this.logger.log(`Creating payment transaction with Wompi for ${transactionId}`);
+      this.logger.log(
+        `Creating payment transaction with Wompi for ${transactionId}`,
+      );
 
       // Crear transacción en Wompi
-      const wompiTransaction = await this.wompiService.createTransaction({
+      let wompiTransaction = await this.wompiService.createTransaction({
         amount_in_cents: Math.round(transaction.total * 100), // Convertir a centavos
         currency: 'COP',
         customer_email: transaction.customer.email,
         payment_method: {
           type: 'CARD',
           token: cardToken,
-          installments: 1,
+          installments: paymentDto.installments || 1, // Usar cuotas del DTO o 1 por defecto
         },
         reference: transaction.id,
+        acceptance_token: acceptanceToken,
         customer_data: {
           phone_number: transaction.customer.phone,
           full_name: transaction.customer.fullName,
@@ -263,18 +277,43 @@ export class TransactionService {
       });
 
       this.logger.log(
-        `Wompi transaction created: ${wompiTransaction.data.id} with status: ${wompiTransaction.data.status}`,
+        `Wompi transaction created: ${wompiTransaction.data.id} with initial status: ${wompiTransaction.data.status}`,
+      );
+
+      // Si la transacción está PENDING (común en Sandbox), esperar y consultar el estado
+      if (wompiTransaction.data.status === 'PENDING') {
+        this.logger.log(
+          `Transaction is PENDING, waiting for final status...`,
+        );
+        wompiTransaction = await this.wompiService.waitForTransactionStatus(
+          wompiTransaction.data.id,
+          5, // 5 reintentos
+          2000, // 2 segundos entre intentos
+        );
+        this.logger.log(
+          `Transaction final status after polling: ${wompiTransaction.data.status}`,
+        );
+      }
+
+      // Log completo de la respuesta de Wompi para debugging
+      this.logger.log(
+        `Full Wompi response: ${JSON.stringify(wompiTransaction.data, null, 2)}`,
       );
 
       // Actualizar el estado de la transacción según la respuesta de Wompi
       let newStatus: TransactionStatus;
-      
+
       switch (wompiTransaction.data.status) {
         case 'APPROVED':
           newStatus = TransactionStatus.APPROVED;
           // Reducir stock del producto
-          await this.productService.reduceStock(transaction.product.id, transaction.quantity);
-          this.logger.log(`Stock reduced for product ${transaction.product.id}`);
+          await this.productService.reduceStock(
+            transaction.product.id,
+            transaction.quantity,
+          );
+          this.logger.log(
+            `Stock reduced for product ${transaction.product.id}`,
+          );
           break;
         case 'PENDING':
           newStatus = TransactionStatus.PENDING;
@@ -287,15 +326,22 @@ export class TransactionService {
       }
 
       // Actualizar transacción con datos de Wompi
-      const updatedTransaction = await this.updateStatus(transaction.id, newStatus, {
-        wompiTransactionId: wompiTransaction.data.id,
-        paymentResponse: JSON.stringify(wompiTransaction.data),
-        paidAt: newStatus === TransactionStatus.APPROVED ? new Date() : undefined,
-      });
+      const updatedTransaction = await this.updateStatus(
+        transaction.id,
+        newStatus,
+        {
+          wompiTransactionId: wompiTransaction.data.id,
+          paymentResponse: JSON.stringify(wompiTransaction.data),
+          paidAt:
+            newStatus === TransactionStatus.APPROVED ? new Date() : undefined,
+        },
+      );
 
-      this.logger.log(`Transaction ${transactionId} updated with status: ${newStatus}`);
-      this.logger.logMethodExit('processPayment', { 
-        transactionId, 
+      this.logger.log(
+        `Transaction ${transactionId} updated with status: ${newStatus}`,
+      );
+      this.logger.logMethodExit('processPayment', {
+        transactionId,
         status: newStatus,
         wompiTransactionId: wompiTransaction.data.id,
       });
@@ -314,6 +360,118 @@ export class TransactionService {
       throw new CustomException(
         ErrorCode.TRANSACTION_PAYMENT_FAILED,
         { transactionId, originalError: error.message },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async syncPaymentStatus(transactionId: string): Promise<Transaction> {
+    this.logger.logMethodEntry('syncPaymentStatus', { transactionId });
+
+    try {
+      // Buscar la transacción
+      const transaction = await this.findById(transactionId);
+
+      // Verificar que tenga ID de Wompi
+      if (!transaction.wompiTransactionId) {
+        this.logger.warn(
+          `Transaction ${transactionId} has no Wompi transaction ID`,
+        );
+        throw new CustomException(
+          ErrorCode.TRANSACTION_NOT_FOUND,
+          { message: 'Transaction has not been processed with Wompi yet' },
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      this.logger.log(
+        `Querying Wompi for transaction ${transaction.wompiTransactionId}`,
+      );
+
+      // Consultar estado en Wompi
+      const wompiTransaction = await this.wompiService.getTransaction(
+        transaction.wompiTransactionId,
+      );
+
+      this.logger.log(
+        `Wompi status for ${transaction.wompiTransactionId}: ${wompiTransaction.data.status}`,
+      );
+
+      // Mapear estado de Wompi a nuestro sistema
+      let newStatus: TransactionStatus;
+      const previousStatus = transaction.status;
+
+      switch (wompiTransaction.data.status) {
+        case 'APPROVED':
+          newStatus = TransactionStatus.APPROVED;
+          break;
+        case 'PENDING':
+          newStatus = TransactionStatus.PENDING;
+          break;
+        case 'DECLINED':
+          newStatus = TransactionStatus.DECLINED;
+          break;
+        case 'ERROR':
+          newStatus = TransactionStatus.ERROR;
+          break;
+        case 'VOIDED':
+          newStatus = TransactionStatus.VOIDED;
+          break;
+        default:
+          newStatus = TransactionStatus.ERROR;
+      }
+
+      // Si el estado cambió a APPROVED y antes no lo era, reducir stock
+      if (
+        newStatus === TransactionStatus.APPROVED &&
+        previousStatus !== TransactionStatus.APPROVED
+      ) {
+        this.logger.log(
+          `Payment approved, reducing stock for product ${transaction.product.id}`,
+        );
+        await this.productService.reduceStock(
+          transaction.product.id,
+          transaction.quantity,
+        );
+        this.logger.log(`Stock reduced for product ${transaction.product.id}`);
+      }
+
+      // Actualizar transacción con el nuevo estado
+      const updatedTransaction = await this.updateStatus(
+        transaction.id,
+        newStatus,
+        {
+          paymentResponse: JSON.stringify(wompiTransaction.data),
+          paidAt:
+            newStatus === TransactionStatus.APPROVED
+              ? new Date()
+              : transaction.paidAt,
+        },
+      );
+
+      this.logger.log(
+        `Transaction ${transactionId} synced with status: ${newStatus}`,
+      );
+      this.logger.logMethodExit('syncPaymentStatus', {
+        transactionId,
+        previousStatus,
+        newStatus,
+      });
+
+      return updatedTransaction;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      this.logger.error(
+        `Error syncing payment status for transaction ${transactionId}: ${error.message}`,
+        error.stack,
+        'TransactionService',
+        ErrorCode.PAYMENT_GATEWAY_ERROR,
+      );
+      throw new CustomException(
+        ErrorCode.PAYMENT_GATEWAY_ERROR,
+        { originalError: error.message },
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -338,7 +496,10 @@ export class TransactionService {
         updateData.paidAt = new Date();
       }
 
-      const updatedTransaction = await this.transactionRepository.update(id, updateData);
+      const updatedTransaction = await this.transactionRepository.update(
+        id,
+        updateData,
+      );
       this.logger.log(`Transaction ${id} status updated to ${status}`);
       this.logger.logMethodExit('updateStatus');
 
@@ -361,9 +522,106 @@ export class TransactionService {
     }
   }
 
+  /**
+   * Actualiza una transacción basándose en un webhook de Wompi
+   * Este método es llamado por el WebhookController cuando Wompi notifica cambios de estado
+   */
+  async updateTransactionFromWebhook(
+    transactionId: string,
+    wompiStatus: string,
+    wompiTransactionId: string,
+    webhookData: any,
+  ): Promise<Transaction> {
+    this.logger.logMethodEntry('updateTransactionFromWebhook', {
+      transactionId,
+      wompiStatus,
+      wompiTransactionId,
+    });
+
+    try {
+      // Buscar la transacción
+      const transaction = await this.findById(transactionId);
+
+      this.logger.log(
+        `Processing webhook for transaction ${transactionId}: ${transaction.status} -> ${wompiStatus}`,
+      );
+
+      // Mapear el estado de Wompi a nuestro TransactionStatus
+      let newStatus: TransactionStatus;
+
+      switch (wompiStatus) {
+        case 'APPROVED':
+          newStatus = TransactionStatus.APPROVED;
+          // Reducir stock si aún no se ha reducido
+          if (
+            transaction.status !== TransactionStatus.APPROVED &&
+            transaction.product
+          ) {
+            await this.productService.reduceStock(
+              transaction.product.id,
+              transaction.quantity,
+            );
+            this.logger.log(
+              `Stock reduced for product ${transaction.product.id} via webhook`,
+            );
+          }
+          break;
+        case 'DECLINED':
+          newStatus = TransactionStatus.DECLINED;
+          break;
+        case 'VOIDED':
+          newStatus = TransactionStatus.VOIDED;
+          break;
+        case 'ERROR':
+          newStatus = TransactionStatus.ERROR;
+          break;
+        case 'PENDING':
+          newStatus = TransactionStatus.PENDING;
+          break;
+        default:
+          this.logger.warn(`Unknown Wompi status: ${wompiStatus}`);
+          newStatus = TransactionStatus.PENDING;
+      }
+
+      // Actualizar la transacción
+      const updatedTransaction = await this.updateStatus(
+        transaction.id,
+        newStatus,
+        {
+          wompiTransactionId: wompiTransactionId,
+          paymentResponse: JSON.stringify(webhookData),
+          paidAt:
+            newStatus === TransactionStatus.APPROVED ? new Date() : undefined,
+        },
+      );
+
+      this.logger.log(
+        `Transaction ${transactionId} updated via webhook to status: ${newStatus}`,
+      );
+      this.logger.logMethodExit('updateTransactionFromWebhook');
+
+      return updatedTransaction;
+    } catch (error) {
+      if (error instanceof CustomException) {
+        throw error;
+      }
+      this.logger.error(
+        `Error updating transaction from webhook: ${error.message}`,
+        error.stack,
+        'TransactionService',
+        ErrorCode.TRANSACTION_UPDATE_FAILED,
+      );
+      throw new CustomException(
+        ErrorCode.TRANSACTION_UPDATE_FAILED,
+        { originalError: error.message },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   async delete(id: string): Promise<void> {
     this.logger.logMethodEntry('delete', { id });
-    
+
     try {
       await this.findById(id);
       await this.transactionRepository.delete(id);

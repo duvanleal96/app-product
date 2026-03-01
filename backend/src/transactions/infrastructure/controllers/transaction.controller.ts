@@ -44,7 +44,46 @@ export class TransactionController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() processPaymentDto: ProcessPaymentDto,
   ) {
-    return this.transactionService.processPayment(id, processPaymentDto);
+    const transaction = await this.transactionService.processPayment(
+      id,
+      processPaymentDto,
+    );
+
+    // Parsear paymentResponse para incluirlo en la respuesta
+    let wompiResponse = null;
+    if (transaction.paymentResponse) {
+      try {
+        wompiResponse = JSON.parse(transaction.paymentResponse);
+      } catch (e) {
+        // Si no se puede parsear, dejar como null
+      }
+    }
+
+    return {
+      ...transaction,
+      wompiDetails: wompiResponse,
+    };
+  }
+
+  @Post(':id/sync-status')
+  async syncPaymentStatus(@Param('id', ParseUUIDPipe) id: string) {
+    const transaction =
+      await this.transactionService.syncPaymentStatus(id);
+
+    // Parsear paymentResponse para incluirlo en la respuesta
+    let wompiResponse = null;
+    if (transaction.paymentResponse) {
+      try {
+        wompiResponse = JSON.parse(transaction.paymentResponse);
+      } catch (e) {
+        // Si no se puede parsear, dejar como null
+      }
+    }
+
+    return {
+      ...transaction,
+      wompiDetails: wompiResponse,
+    };
   }
 
   @Delete(':id')
