@@ -9,55 +9,6 @@
 
 ---
 
-## 🚀 EMPEZAR AHORA
-
-**⏱️ Tienes 72 horas. Cada minuto cuenta.**
-
-### 1️⃣ Setup Inicial (30 min)
-👉 Abre **[EMPEZAR_AHORA.md](EMPEZAR_AHORA.md)** y copia/pega todos los comandos
-
-### 2️⃣ Seguir el Plan (3 días)
-- **Día 1**: Backend + Frontend → [PLAN_EXPRESS_3_DIAS.md](PLAN_EXPRESS_3_DIAS.md)
-- **Día 2**: Integración Wompi + Tests
-- **Día 3**: Deploy + Docs
-
-### 3️⃣ Marcar Progreso
-📋 Usa **[CHECKLIST_3_DIAS.md](CHECKLIST_3_DIAS.md)** para ir marcando cada tarea
-
----
-
-## 📂 Archivos Disponibles
-
-```
-📁 Documentación Esencial
-├── README.md ...................... Este archivo
-├── EMPEZAR_AHORA.md ............... 🚀 EMPIEZA AQUÍ (comandos)
-├── PLAN_EXPRESS_3_DIAS.md ......... Plan hora por hora
-└── CHECKLIST_3_DIAS.md ............ Checklist para marcar
-
-📁 Configuración
-├── docker-compose.yml ............. PostgreSQL + Redis
-├── backend/.env.example ........... Variables backend
-├── frontend/.env.example .......... Variables frontend
-└── .gitignore ..................... Git ignore
-```
-
----
-
-## 🎯 Objetivo Mínimo para Aprobar
-
-**100 puntos** = Reto aprobado
-
-| Criterio | Puntos |
-|----------|--------|
-| ✅ Flujo de 5 pasos funcional | 40 pts |
-| ✅ API REST completa | 20 pts |
-| ✅ Tests >80% cobertura | 30 pts |
-| ✅ App desplegada | 20 pts |
-| ✅ Documentación | 10 pts |
-| **TOTAL MÍNIMO** | **100 pts** |
-
----
 
 ## 🛠️ Stack Técnico
 
@@ -134,10 +85,3 @@ cd frontend && npm run test -- --coverage
 - `POST /api/transactions/:id/process-payment` - Procesar pago
 - `GET /api/transactions/:id` - Ver resultado
 
----
-
-## 💡 Siguiente Paso
-
-👉 Ve a **[EMPEZAR_AHORA.md](EMPEZAR_AHORA.md)** y ejecuta los comandos de setup
-
-**¡Suerte! 🚀**
