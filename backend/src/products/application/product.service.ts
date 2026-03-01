@@ -58,4 +58,15 @@ export class ProductService {
 
     return this.productRepository.updateStock(id, quantity);
   }
+
+  async reduceStock(id: string, quantity: number): Promise<Product> {
+    const product = await this.findById(id);
+
+    if (product.stock < quantity) {
+      throw new Error(`Insufficient stock for product ${product.name}. Available: ${product.stock}, Requested: ${quantity}`);
+    }
+
+    const newStock = product.stock - quantity;
+    return this.productRepository.updateStock(id, newStock);
+  }
 }

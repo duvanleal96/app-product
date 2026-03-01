@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { TransactionService } from '../../application/transaction.service';
 import { CreateTransactionDto } from '../../application/dto/create-transaction.dto';
+import { ProcessPaymentDto } from '../../application/dto/process-payment.dto';
 
 @Controller('api/transactions')
 export class TransactionController {
@@ -36,6 +37,14 @@ export class TransactionController {
   @Post()
   async create(@Body() createTransactionDto: CreateTransactionDto) {
     return this.transactionService.create(createTransactionDto);
+  }
+
+  @Post(':id/process-payment')
+  async processPayment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() processPaymentDto: ProcessPaymentDto,
+  ) {
+    return this.transactionService.processPayment(id, processPaymentDto);
   }
 
   @Delete(':id')

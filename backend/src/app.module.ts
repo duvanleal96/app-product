@@ -9,6 +9,7 @@ import { ProductsModule } from './products/products.module';
 import { CustomersModule } from './customers/customers.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { DeliveriesModule } from './deliveries/deliveries.module';
+import { LoggerService } from './shared/infrastructure/logger/logger.service';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { DeliveriesModule } from './deliveries/deliveries.module';
     DeliveriesModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, LoggerService],
+  exports: [LoggerService],
 })
 export class AppModule {}

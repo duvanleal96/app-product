@@ -7,6 +7,7 @@ import { TransactionRepository } from './infrastructure/persistence/transaction.
 import { TRANSACTION_REPOSITORY } from './domain/repositories/transaction.repository.interface';
 import { ProductsModule } from '../products/products.module';
 import { CustomersModule } from '../customers/customers.module';
+import { WompiService } from './infrastructure/wompi/wompi.service';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { CustomersModule } from '../customers/customers.module';
   controllers: [TransactionController],
   providers: [
     TransactionService,
+    WompiService,
     {
       provide: TRANSACTION_REPOSITORY,
       useClass: TransactionRepository,
