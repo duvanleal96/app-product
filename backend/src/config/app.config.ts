@@ -9,7 +9,8 @@ export default () => ({
     database: process.env.DB_NAME || 'ecommerce_dev',
   },
   wompi: {
-    apiUrl: process.env.WOMPI_API_URL || 'https://api-sandbox.co.uat.wompi.dev/v1',
+    apiUrl:
+      process.env.WOMPI_API_URL || 'https://api-sandbox.co.uat.wompi.dev/v1',
     publicKey: process.env.WOMPI_PUBLIC_KEY,
     privateKey: process.env.WOMPI_PRIVATE_KEY,
     eventsKey: process.env.WOMPI_EVENTS_KEY,
@@ -20,8 +21,12 @@ export default () => ({
     deliveryFee: parseInt(process.env.DELIVERY_FEE || '5000', 10) || 5000,
   },
   cors: {
-    origin: process.env.CORS_ORIGIN 
-      ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
-      : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
+    origin: process.env.CORS_ORIGIN
+      ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim())
+      : [
+          'http://localhost:5173',
+          'http://localhost:5174',
+          'http://localhost:3000',
+        ],
   },
 });

@@ -67,8 +67,7 @@ export class TransactionController {
 
   @Post(':id/sync-status')
   async syncPaymentStatus(@Param('id', ParseUUIDPipe) id: string) {
-    const transaction =
-      await this.transactionService.syncPaymentStatus(id);
+    const transaction = await this.transactionService.syncPaymentStatus(id);
 
     // Parsear paymentResponse para incluirlo en la respuesta
     let wompiResponse = null;

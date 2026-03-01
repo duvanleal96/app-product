@@ -282,9 +282,7 @@ export class TransactionService {
 
       // Si la transacción está PENDING (común en Sandbox), esperar y consultar el estado
       if (wompiTransaction.data.status === 'PENDING') {
-        this.logger.log(
-          `Transaction is PENDING, waiting for final status...`,
-        );
+        this.logger.log(`Transaction is PENDING, waiting for final status...`);
         wompiTransaction = await this.wompiService.waitForTransactionStatus(
           wompiTransaction.data.id,
           5, // 5 reintentos

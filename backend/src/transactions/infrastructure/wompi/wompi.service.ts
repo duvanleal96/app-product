@@ -323,7 +323,7 @@ export class WompiService {
 
   /**
    * Verifica la firma de un evento de webhook según la documentación de Wompi
-   * 
+   *
    * Pasos según Wompi:
    * 1. Concatenar los valores de los campos especificados en signature.properties
    * 2. Concatenar el timestamp
@@ -359,7 +359,9 @@ export class WompiService {
       // Paso 3: Concatenar el secreto de eventos
       concatenatedValues += wompiConfig.eventsSecret;
 
-      this.logger.debug(`Concatenated string for signature: ${concatenatedValues}`);
+      this.logger.debug(
+        `Concatenated string for signature: ${concatenatedValues}`,
+      );
 
       // Paso 4: Calcular SHA256
       const expectedChecksum = crypto

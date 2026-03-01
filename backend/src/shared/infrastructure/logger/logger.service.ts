@@ -11,10 +11,17 @@ export class LoggerService implements NestLoggerService {
 
   log(message: string, context?: string): void {
     const logContext = context || this.context;
-    console.log(`[${new Date().toISOString()}] [LOG] [${logContext}] ${message}`);
+    console.log(
+      `[${new Date().toISOString()}] [LOG] [${logContext}] ${message}`,
+    );
   }
 
-  error(message: string, trace?: string, context?: string, errorCode?: ErrorCode): void {
+  error(
+    message: string,
+    trace?: string,
+    context?: string,
+    errorCode?: ErrorCode,
+  ): void {
     const logContext = context || this.context;
     const errorCodeStr = errorCode ? `[${errorCode}]` : '';
     console.error(
@@ -27,17 +34,23 @@ export class LoggerService implements NestLoggerService {
 
   warn(message: string, context?: string): void {
     const logContext = context || this.context;
-    console.warn(`[${new Date().toISOString()}] [WARN] [${logContext}] ${message}`);
+    console.warn(
+      `[${new Date().toISOString()}] [WARN] [${logContext}] ${message}`,
+    );
   }
 
   debug(message: string, context?: string): void {
     const logContext = context || this.context;
-    console.debug(`[${new Date().toISOString()}] [DEBUG] [${logContext}] ${message}`);
+    console.debug(
+      `[${new Date().toISOString()}] [DEBUG] [${logContext}] ${message}`,
+    );
   }
 
   verbose(message: string, context?: string): void {
     const logContext = context || this.context;
-    console.log(`[${new Date().toISOString()}] [VERBOSE] [${logContext}] ${message}`);
+    console.log(
+      `[${new Date().toISOString()}] [VERBOSE] [${logContext}] ${message}`,
+    );
   }
 
   logMethodEntry(methodName: string, params?: any): void {
