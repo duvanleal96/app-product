@@ -20,6 +20,8 @@ export default () => ({
     deliveryFee: parseInt(process.env.DELIVERY_FEE || '5000', 10) || 5000,
   },
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: process.env.CORS_ORIGIN 
+      ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+      : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
   },
 });
