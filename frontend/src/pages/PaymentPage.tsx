@@ -10,6 +10,7 @@ import {
 } from '../store/checkoutSlice';
 import { StepIndicator } from '../components/common/StepIndicator';
 import { ErrorMessage } from '../components/common/ErrorMessage';
+import { applyGradient } from '../theme/colors';
 
 const CHECKOUT_STEPS = ['Producto', 'Datos', 'Pago', 'Confirmación'];
 
@@ -166,7 +167,7 @@ export const PaymentPage = () => {
 
   if (!customerId) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={applyGradient('background')}>
         <div className="text-center">
           <p className="text-gray-500 mb-4">
             Por favor completa tus datos personales primero
@@ -181,7 +182,7 @@ export const PaymentPage = () => {
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={applyGradient('background')}>
         <div className="text-center">
           <p className="text-gray-500 mb-4">No tienes productos en tu carrito</p>
           <button onClick={() => navigate('/')} className="btn btn-primary">
@@ -193,335 +194,311 @@ export const PaymentPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <StepIndicator currentStep={3} steps={CHECKOUT_STEPS} />
+    <div className="min-h-screen flex items-center justify-center py-8 px-4" style={applyGradient('background')}>
+      <div className="w-full max-w-sm">
+        <div className="mb-4">
+          <StepIndicator currentStep={3} steps={CHECKOUT_STEPS} />
+        </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {/* Payment Form */}
-          <div className="md:col-span-2">
-            <div className="card mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                Información de Pago
-              </h2>
+        {/* Centered Title */}
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-1">
+            Pago y Entrega
+          </h2>
+          <p className="text-gray-500 text-xs">Completa los datos</p>
+        </div>
 
-              {error && <ErrorMessage message={error} />}
+        <div className="bg-white rounded-xl shadow-lg p-5">
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Card Number */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Número de Tarjeta *
-                  </label>
-                  <input
-                    type="text"
-                    maxLength={19}
-                    value={localCardInfo.cardNumber}
-                    onChange={(e) => handleCardNumberChange(e.target.value)}
-                    className={`input ${errors.cardNumber ? 'input-error' : ''}`}
-                    placeholder="1234 5678 9012 3456"
-                  />
-                  {errors.cardNumber && (
-                    <p className="text-red-500 text-sm mt-1">{errors.cardNumber}</p>
-                  )}
-                </div>
+          {error && <ErrorMessage message={error} />}
 
-                {/* Card Holder */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Titular de la Tarjeta *
-                  </label>
-                  <input
-                    type="text"
-                    value={localCardInfo.cardHolder}
-                    onChange={(e) =>
-                      setLocalCardInfo((prev) => ({
-                        ...prev,
-                        cardHolder: e.target.value.toUpperCase(),
-                      }))
-                    }
-                    className={`input ${errors.cardHolder ? 'input-error' : ''}`}
-                    placeholder="JUAN PEREZ"
-                  />
-                  {errors.cardHolder && (
-                    <p className="text-red-500 text-sm mt-1">{errors.cardHolder}</p>
-                  )}
-                </div>
-
-                {/* Expiry & CVV */}
-                <div className="grid grid-cols-3 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
+                  {/* Card Number */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Mes *
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Número de Tarjeta
                     </label>
-                    <select
-                      value={localCardInfo.cardExpMonth}
-                      onChange={(e) =>
-                        setLocalCardInfo((prev) => ({
-                          ...prev,
-                          cardExpMonth: e.target.value,
-                        }))
-                      }
-                      className={`input ${errors.expiryMonth ? 'input-error' : ''}`}
-                    >
-                      <option value="">MM</option>
-                      {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                        <option key={month} value={month.toString().padStart(2, '0')}>
-                          {month.toString().padStart(2, '0')}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.expiryMonth && (
-                      <p className="text-red-500 text-sm mt-1">{errors.expiryMonth}</p>
+                    <input
+                      type="text"
+                      maxLength={19}
+                      value={localCardInfo.cardNumber}
+                      onChange={(e) => handleCardNumberChange(e.target.value)}
+                      className={`w-full px-3 py-2 rounded-md border ${errors.cardNumber ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm font-mono`}
+                      placeholder="1234 5678 9012 3456"
+                    />
+                    {errors.cardNumber && (
+                      <p className="text-red-500 text-xs mt-0.5">{errors.cardNumber}</p>
                     )}
                   </div>
+
+                  {/* Card Holder */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Año *
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Titular
                     </label>
-                    <select
-                      value={localCardInfo.cardExpYear}
+                    <input
+                      type="text"
+                      value={localCardInfo.cardHolder}
                       onChange={(e) =>
                         setLocalCardInfo((prev) => ({
                           ...prev,
-                          cardExpYear: e.target.value,
+                          cardHolder: e.target.value.toUpperCase(),
                         }))
                       }
-                      className={`input ${errors.expiryYear ? 'input-error' : ''}`}
-                    >
-                      <option value="">YYYY</option>
-                      {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(
-                        (year) => (
-                          <option key={year} value={year}>
-                            {year}
+                      className={`w-full px-3 py-2 rounded-md border ${errors.cardHolder ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm uppercase`}
+                      placeholder="JUAN PEREZ"
+                    />
+                    {errors.cardHolder && (
+                      <p className="text-red-500 text-xs mt-0.5">{errors.cardHolder}</p>
+                    )}
+                  </div>
+
+                  {/* Expiry & CVV */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Mes
+                      </label>
+                      <select
+                        value={localCardInfo.cardExpMonth}
+                        onChange={(e) =>
+                          setLocalCardInfo((prev) => ({
+                            ...prev,
+                            cardExpMonth: e.target.value,
+                          }))
+                        }
+                        className={`w-full px-3 py-2 rounded-md border ${errors.expiryMonth ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm`}
+                      >
+                        <option value="">MM</option>
+                        {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                          <option key={month} value={month.toString().padStart(2, '0')}>
+                            {month.toString().padStart(2, '0')}
                           </option>
-                        )
+                        ))}
+                      </select>
+                      {errors.expiryMonth && (
+                        <p className="text-red-500 text-xs mt-0.5">{errors.expiryMonth}</p>
                       )}
-                    </select>
-                    {errors.expiryYear && (
-                      <p className="text-red-500 text-sm mt-1">{errors.expiryYear}</p>
-                    )}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Año
+                      </label>
+                      <select
+                        value={localCardInfo.cardExpYear}
+                        onChange={(e) =>
+                          setLocalCardInfo((prev) => ({
+                            ...prev,
+                            cardExpYear: e.target.value,
+                          }))
+                        }
+                        className={`w-full px-3 py-2 rounded-md border ${errors.expiryYear ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm`}
+                      >
+                        <option value="">YYYY</option>
+                        {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() + i).map(
+                          (year) => (
+                            <option key={year} value={year}>
+                              {year}
+                            </option>
+                          )
+                        )}
+                      </select>
+                      {errors.expiryYear && (
+                        <p className="text-red-500 text-xs mt-0.5">{errors.expiryYear}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        CVV
+                      </label>
+                      <input
+                        type="text"
+                        maxLength={4}
+                        value={localCardInfo.cardCvc}
+                        onChange={(e) =>
+                          setLocalCardInfo((prev) => ({
+                            ...prev,
+                            cardCvc: e.target.value.replace(/\D/g, ''),
+                          }))
+                        }
+                        className={`w-full px-3 py-2 rounded-md border ${errors.cvv ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm font-mono text-center`}
+                        placeholder="123"
+                      />
+                      {errors.cvv && (
+                        <p className="text-red-500 text-xs mt-0.5">{errors.cvv}</p>
+                      )}
+                    </div>
                   </div>
+
+                <div className="border-t border-gray-200 my-3"></div>
+
+                  {/* Full Name & Phone */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Nombre
+                      </label>
+                      <input
+                        type="text"
+                        value={localDeliveryInfo.fullName}
+                        onChange={(e) =>
+                          setLocalDeliveryInfo((prev) => ({
+                            ...prev,
+                            fullName: e.target.value,
+                          }))
+                        }
+                        className={`w-full px-3 py-2 rounded-md border ${errors.deliveryFullName ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm`}
+                        placeholder="Juan Pérez"
+                      />
+                      {errors.deliveryFullName && (
+                        <p className="text-red-500 text-xs mt-0.5">{errors.deliveryFullName}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Teléfono
+                      </label>
+                      <input
+                        type="tel"
+                        value={localDeliveryInfo.phone}
+                        onChange={(e) =>
+                          setLocalDeliveryInfo((prev) => ({
+                            ...prev,
+                            phone: e.target.value,
+                          }))
+                        }
+                        className={`w-full px-3 py-2 rounded-md border ${errors.deliveryPhone ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm`}
+                        placeholder="+57 300 123 4567"
+                      />
+                      {errors.deliveryPhone && (
+                        <p className="text-red-500 text-xs mt-0.5">{errors.deliveryPhone}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Delivery Address */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      CVV *
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Dirección
                     </label>
                     <input
                       type="text"
-                      maxLength={4}
-                      value={localCardInfo.cardCvc}
-                      onChange={(e) =>
-                        setLocalCardInfo((prev) => ({
-                          ...prev,
-                          cardCvc: e.target.value.replace(/\D/g, ''),
-                        }))
-                      }
-                      className={`input ${errors.cvv ? 'input-error' : ''}`}
-                      placeholder="123"
-                    />
-                    {errors.cvv && (
-                      <p className="text-red-500 text-sm mt-1">{errors.cvv}</p>
-                    )}
-                  </div>
-                </div>
-
-                <hr className="my-6" />
-
-                <h3 className="text-xl font-bold text-gray-900 mb-4">
-                  Información de Entrega
-                </h3>
-
-                {/* Full Name & Phone */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nombre Completo *
-                    </label>
-                    <input
-                      type="text"
-                      value={localDeliveryInfo.fullName}
+                      value={localDeliveryInfo.address}
                       onChange={(e) =>
                         setLocalDeliveryInfo((prev) => ({
                           ...prev,
-                          fullName: e.target.value,
+                          address: e.target.value,
                         }))
                       }
-                      className={`input ${errors.deliveryFullName ? 'input-error' : ''}`}
-                      placeholder="Juan Pérez"
+                      className={`w-full px-3 py-2 rounded-md border ${errors.deliveryAddress ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm`}
+                      placeholder="Calle 123 #45-67"
                     />
-                    {errors.deliveryFullName && (
-                      <p className="text-red-500 text-sm mt-1">{errors.deliveryFullName}</p>
+                    {errors.deliveryAddress && (
+                      <p className="text-red-500 text-xs mt-0.5">{errors.deliveryAddress}</p>
                     )}
                   </div>
+
+                  {/* City & Department */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Ciudad
+                      </label>
+                      <input
+                        type="text"
+                        value={localDeliveryInfo.city}
+                        onChange={(e) =>
+                          setLocalDeliveryInfo((prev) => ({
+                            ...prev,
+                            city: e.target.value,
+                          }))
+                        }
+                        className={`w-full px-3 py-2 rounded-md border ${errors.deliveryCity ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm`}
+                        placeholder="Bogotá"
+                      />
+                      {errors.deliveryCity && (
+                        <p className="text-red-500 text-xs mt-0.5">{errors.deliveryCity}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Departamento
+                      </label>
+                      <input
+                        type="text"
+                        value={localDeliveryInfo.department}
+                        onChange={(e) =>
+                          setLocalDeliveryInfo((prev) => ({
+                            ...prev,
+                            department: e.target.value,
+                          }))
+                        }
+                        className={`w-full px-3 py-2 rounded-md border ${errors.deliveryDepartment ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm`}
+                        placeholder="Cundinamarca"
+                      />
+                      {errors.deliveryDepartment && (
+                        <p className="text-red-500 text-xs mt-0.5">{errors.deliveryDepartment}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Additional Notes */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Teléfono *
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Notas (opcional)
                     </label>
-                    <input
-                      type="tel"
-                      value={localDeliveryInfo.phone}
+                    <textarea
+                      value={localDeliveryInfo.notes}
                       onChange={(e) =>
                         setLocalDeliveryInfo((prev) => ({
                           ...prev,
-                          phone: e.target.value,
+                          notes: e.target.value,
                         }))
                       }
-                      className={`input ${errors.deliveryPhone ? 'input-error' : ''}`}
-                      placeholder="+57 300 123 4567"
+                      className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm"
+                      rows={2}
+                      placeholder="Instrucciones especiales..."
                     />
-                    {errors.deliveryPhone && (
-                      <p className="text-red-500 text-sm mt-1">{errors.deliveryPhone}</p>
-                    )}
                   </div>
-                </div>
 
-                {/* Delivery Address */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Dirección de Entrega *
-                  </label>
-                  <input
-                    type="text"
-                    value={localDeliveryInfo.address}
-                    onChange={(e) =>
-                      setLocalDeliveryInfo((prev) => ({
-                        ...prev,
-                        address: e.target.value,
-                      }))
-                    }
-                    className={`input ${errors.deliveryAddress ? 'input-error' : ''}`}
-                    placeholder="Calle 123 #45-67"
-                  />
-                  {errors.deliveryAddress && (
-                    <p className="text-red-500 text-sm mt-1">{errors.deliveryAddress}</p>
-                  )}
-                </div>
-
-                {/* City & Department */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Ciudad *
-                    </label>
-                    <input
-                      type="text"
-                      value={localDeliveryInfo.city}
-                      onChange={(e) =>
-                        setLocalDeliveryInfo((prev) => ({
-                          ...prev,
-                          city: e.target.value,
-                        }))
-                      }
-                      className={`input ${errors.deliveryCity ? 'input-error' : ''}`}
-                      placeholder="Bogotá"
-                    />
-                    {errors.deliveryCity && (
-                      <p className="text-red-500 text-sm mt-1">{errors.deliveryCity}</p>
-                    )}
+                  {/* Resumen de compra */}
+                <div className="p-3 bg-gray-50 rounded-md mt-3">
+                  <h3 className="text-xs font-medium text-gray-700 mb-2">Resumen</h3>
+                  {cartItems.map((item) => (
+                    <div key={item.product.id} className="text-xs text-gray-600 mb-1 flex justify-between">
+                      <span>{item.product.name} (x{item.quantity})</span>
+                      <span className="font-medium">{formatPrice(item.product.price * item.quantity)}</span>
+                    </div>
+                  ))}
+                  <div className="border-t border-gray-300 mt-2 pt-2 flex justify-between text-sm font-bold">
+                    <span>Total:</span>
+                    <span className="text-blue-600">
+                      {formatPrice(total + 10000)}
+                    </span>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Departamento *
-                    </label>
-                    <input
-                      type="text"
-                      value={localDeliveryInfo.department}
-                      onChange={(e) =>
-                        setLocalDeliveryInfo((prev) => ({
-                          ...prev,
-                          department: e.target.value,
-                        }))
-                      }
-                      className={`input ${errors.deliveryDepartment ? 'input-error' : ''}`}
-                      placeholder="Cundinamarca"
-                    />
-                    {errors.deliveryDepartment && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.deliveryDepartment}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Additional Notes */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Notas adicionales (opcional)
-                  </label>
-                  <textarea
-                    value={localDeliveryInfo.notes}
-                    onChange={(e) =>
-                      setLocalDeliveryInfo((prev) => ({
-                        ...prev,
-                        notes: e.target.value,
-                      }))
-                    }
-                    className="input"
-                    rows={3}
-                    placeholder="Instrucciones especiales para la entrega..."
-                  />
                 </div>
 
                 {/* Buttons */}
-                <div className="flex justify-between pt-4">
+                <div className="flex gap-2 pt-4">
                   <button
                     type="button"
                     onClick={() => navigate('/customer-info')}
-                    className="btn btn-secondary"
+                    className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 transition"
                     disabled={loading}
                   >
-                    ← Atrás
+                    Atrás
                   </button>
                   <button
                     type="submit"
-                    className="btn btn-primary"
+                    className="flex-1 px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={loading}
                   >
-                    {loading ? 'Procesando...' : 'Procesar Pago'}
+                    {loading ? 'Procesando...' : 'Pagar'}
                   </button>
                 </div>
               </form>
             </div>
           </div>
-
-          {/* Order Summary */}
-          <div>
-            <div className="card sticky top-8">
-              <h3 className="text-lg font-bold text-gray-900 mb-4">
-                Resumen de Compra
-              </h3>
-              {cartItems.map((item) => (
-                <div key={item.product.id} className="mb-4 pb-4 border-b">
-                  <h4 className="font-medium text-gray-900">{item.product.name}</h4>
-                  <p className="text-sm text-gray-600">
-                    Cantidad: {item.quantity}
-                  </p>
-                  <p className="text-lg font-bold text-blue-600 mt-2">
-                    {formatPrice(item.product.price * item.quantity)}
-                  </p>
-                </div>
-              ))}
-              <div className="pt-4">
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Subtotal:</span>
-                  <span className="font-medium">{formatPrice(total)}</span>
-                </div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Envío:</span>
-                  <span className="font-medium">{formatPrice(10000)}</span>
-                </div>
-                <hr className="my-3" />
-                <div className="flex justify-between">
-                  <span className="text-lg font-bold">Total:</span>
-                  <span className="text-lg font-bold text-blue-600">
-                    {formatPrice(total + 10000)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
-      </div>
-    </div>
   );
 };

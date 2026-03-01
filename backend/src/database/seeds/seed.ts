@@ -26,8 +26,7 @@ const seedProducts = [
     price: 2499000,
     stock: 15,
     category: 'Electrónica',
-    imageUrl:
-      'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=500',
+    imageUrl: 'https://picsum.photos/seed/laptop1/600/400',
     isActive: true,
   },
   {
@@ -37,8 +36,7 @@ const seedProducts = [
     price: 5499000,
     stock: 8,
     category: 'Electrónica',
-    imageUrl:
-      'https://images.unsplash.com/photo-1678652197950-1e3c56c0346b?w=500',
+    imageUrl: 'https://picsum.photos/seed/iphone14/600/400',
     isActive: true,
   },
   {
@@ -48,8 +46,7 @@ const seedProducts = [
     price: 4799000,
     stock: 12,
     category: 'Electrónica',
-    imageUrl:
-      'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=500',
+    imageUrl: 'https://picsum.photos/seed/samsung23/600/400',
     isActive: true,
   },
   {
@@ -58,8 +55,7 @@ const seedProducts = [
     price: 899000,
     stock: 25,
     category: 'Audio',
-    imageUrl:
-      'https://images.unsplash.com/photo-1606841837239-c5a1a4a07af7?w=500',
+    imageUrl: 'https://picsum.photos/seed/airpods/600/400',
     isActive: true,
   },
   {
@@ -69,7 +65,7 @@ const seedProducts = [
     price: 1299000,
     stock: 18,
     category: 'Audio',
-    imageUrl: 'https://images.unsplash.com/photo-1545127398-14699f92334b?w=500',
+    imageUrl: 'https://picsum.photos/seed/sony-headphones/600/400',
     isActive: true,
   },
   {
@@ -79,8 +75,7 @@ const seedProducts = [
     price: 1899000,
     stock: 20,
     category: 'Wearables',
-    imageUrl:
-      'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=500',
+    imageUrl: 'https://picsum.photos/seed/applewatch/600/400',
     isActive: true,
   },
   {
@@ -89,7 +84,7 @@ const seedProducts = [
     price: 3299000,
     stock: 10,
     category: 'Electrónica',
-    imageUrl: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=500',
+    imageUrl: 'https://picsum.photos/seed/ipad-air/600/400',
     isActive: true,
   },
   {
@@ -99,8 +94,7 @@ const seedProducts = [
     price: 8999000,
     stock: 5,
     category: 'Electrónica',
-    imageUrl:
-      'https://images.unsplash.com/photo-1517336714731-489689fd1ca4?w=500',
+    imageUrl: 'https://picsum.photos/seed/macbook-pro/600/400',
     isActive: true,
   },
   {
@@ -109,8 +103,7 @@ const seedProducts = [
     price: 1499000,
     stock: 30,
     category: 'Gaming',
-    imageUrl:
-      'https://images.unsplash.com/photo-1578303512597-81e6cc155b3e?w=500',
+    imageUrl: 'https://picsum.photos/seed/nintendo-switch/600/400',
     isActive: true,
   },
   {
@@ -119,8 +112,7 @@ const seedProducts = [
     price: 2799000,
     stock: 7,
     category: 'Gaming',
-    imageUrl:
-      'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=500',
+    imageUrl: 'https://picsum.photos/seed/ps5-console/600/400',
     isActive: true,
   },
 ];
@@ -134,15 +126,27 @@ async function seed() {
 
     const productRepository = AppDataSource.getRepository(Product);
 
-    // Check if products already exist
-    const existingProducts = await productRepository.count();
-    if (existingProducts > 0) {
-      console.log('⚠️  Products already exist. Skipping seed...');
+    // Check if products already exist and update them
+    const existingProducts = await productRepository.find();
+    if (existingProducts.length > 0) {
+      console.log(
+        '⚠️  Products already exist. Updating with new image URLs...',
+      );
+      for (
+        let i = 0;
+        i < existingProducts.length && i < seedProducts.length;
+        i++
+      ) {
+        existingProducts[i].imageUrl = seedProducts[i].imageUrl;
+        await productRepository.save(existingProducts[i]);
+        console.log(`  ✓ Updated: ${existingProducts[i].name}`);
+      }
+      console.log('✅ Products updated successfully!');
       await AppDataSource.destroy();
       return;
     }
 
-    // Insert products
+    // Insert products if none exist
     console.log('📦 Inserting products...');
     for (const productData of seedProducts) {
       const product = productRepository.create(productData);

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Header } from './components/common/Header';
 import { ProductListPage } from './pages/ProductListPage';
 import { ProductDetailPage } from './pages/ProductDetailPage';
 import { CustomerInfoPage } from './pages/CustomerInfoPage';
@@ -13,14 +14,17 @@ console.log('All env vars:', import.meta.env);
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<ProductListPage />} />
-        <Route path="/product/:id" element={<ProductDetailPage />} />
-        <Route path="/customer-info" element={<CustomerInfoPage />} />
-        <Route path="/payment" element={<PaymentPage />} />
-        <Route path="/result" element={<ResultPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <div className="min-h-screen">
+        <Header />
+        <Routes>
+          <Route path="/" element={<ProductListPage />} />
+          <Route path="/product/:id" element={<ProductDetailPage />} />
+          <Route path="/customer-info" element={<CustomerInfoPage />} />
+          <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/result" element={<ResultPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
     </BrowserRouter>
   );
 }

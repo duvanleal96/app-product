@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { clearCart } from '../store/cartSlice';
 import { StepIndicator } from '../components/common/StepIndicator';
 import { Loading } from '../components/common/Loading';
+import { applyGradient } from '../theme/colors';
 
 const CHECKOUT_STEPS = ['Producto', 'Datos', 'Pago', 'Confirmación'];
 
@@ -48,7 +49,7 @@ export const ResultPage = () => {
 
   if (!transaction) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={applyGradient('background')}>
         <div className="text-center">
           <p className="text-gray-500 mb-4">No se encontró información de la transacción</p>
           <button onClick={() => navigate('/')} className="btn btn-primary">
@@ -62,7 +63,7 @@ export const ResultPage = () => {
   const isSuccess = transaction.status === 'APPROVED';
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen py-8" style={applyGradient('background')}>
       <div className="max-w-3xl mx-auto px-4">
         <StepIndicator currentStep={4} steps={CHECKOUT_STEPS} />
 
@@ -70,37 +71,9 @@ export const ResultPage = () => {
           {/* Icon */}
           <div className="mb-6">
             {isSuccess ? (
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                <svg
-                  className="w-12 h-12 text-green-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
+              <div className="text-6xl">✅</div>
             ) : (
-              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-                <svg
-                  className="w-12 h-12 text-red-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </div>
+              <div className="text-6xl">❌</div>
             )}
           </div>
 

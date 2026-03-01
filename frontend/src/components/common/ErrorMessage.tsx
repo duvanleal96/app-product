@@ -5,29 +5,22 @@ interface ErrorMessageProps {
 
 export const ErrorMessage = ({ message, onRetry }: ErrorMessageProps) => {
   return (
-    <div className="bg-red-50 border border-red-200 rounded-lg p-4 my-4">
-      <div className="flex items-center">
+    <div className="bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-200 rounded-2xl p-6 my-6 shadow-lg animate-slide-up">
+      <div className="flex items-start">
         <div className="flex-shrink-0">
-          <svg
-            className="h-5 w-5 text-red-400"
-            fill="currentColor"
-            viewBox="0 0 20 20"
-          >
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-              clipRule="evenodd"
-            />
-          </svg>
+          <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+            <span className="text-lg">⚠️</span>
+          </div>
         </div>
-        <div className="ml-3">
-          <p className="text-sm text-red-800">{message}</p>
+        <div className="ml-4 flex-1">
+          <h3 className="text-lg font-semibold text-red-900 mb-1">Error</h3>
+          <p className="text-red-700">{message}</p>
         </div>
       </div>
       {onRetry && (
         <button
           onClick={onRetry}
-          className="mt-3 btn btn-secondary text-sm"
+          className="mt-4 btn btn-danger text-sm"
         >
           Intentar de nuevo
         </button>

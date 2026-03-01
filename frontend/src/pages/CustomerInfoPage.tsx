@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { createCustomer, setStep } from '../store/checkoutSlice';
 import { StepIndicator } from '../components/common/StepIndicator';
 import { ErrorMessage } from '../components/common/ErrorMessage';
+import { applyGradient } from '../theme/colors';
 import type { CreateCustomerDto } from '../types';
 
 const CHECKOUT_STEPS = ['Producto', 'Datos', 'Pago', 'Confirmación'];
@@ -87,7 +88,7 @@ export const CustomerInfoPage = () => {
 
   if (cartItems.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={applyGradient('background')}>
         <div className="text-center">
           <p className="text-gray-500 mb-4">No tienes productos en tu carrito</p>
           <button onClick={() => navigate('/')} className="btn btn-primary">
@@ -99,183 +100,194 @@ export const CustomerInfoPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-3xl mx-auto px-4">
-        <StepIndicator currentStep={2} steps={CHECKOUT_STEPS} />
+    <div className="min-h-screen flex items-center justify-center py-8 px-4" style={applyGradient('background')}>
+      <div className="w-full max-w-sm">
+        <div className="mb-4">
+          <StepIndicator currentStep={2} steps={CHECKOUT_STEPS} />
+        </div>
 
-        <div className="card">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+        {/* Centered Title */}
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-1">
             Información del Cliente
           </h2>
+          <p className="text-gray-500 text-xs">Completa tus datos</p>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-lg p-5">
 
           {error && <ErrorMessage message={error} />}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Full Name */}
-            <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
-                Nombre completo *
-              </label>
-              <input
-                type="text"
-                id="fullName"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                className={`input ${errors.fullName ? 'input-error' : ''}`}
-                placeholder="Juan Pérez"
-              />
-              {errors.fullName && (
-                <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>
-              )}
-            </div>
-
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email *
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className={`input ${errors.email ? 'input-error' : ''}`}
-                placeholder="juan@ejemplo.com"
-              />
-              {errors.email && (
-                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-              )}
-            </div>
-
-            {/* Phone */}
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                Teléfono *
-              </label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                className={`input ${errors.phone ? 'input-error' : ''}`}
-                placeholder="+57 300 123 4567"
-              />
-              {errors.phone && (
-                <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
-              )}
-            </div>
-
-            {/* Document Type & Number */}
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
+              
+              {/* Full Name */}
               <div>
-                <label htmlFor="documentType" className="block text-sm font-medium text-gray-700 mb-2">
-                  Tipo de documento *
-                </label>
-                <select
-                  id="documentType"
-                  name="documentType"
-                  value={formData.documentType}
-                  onChange={handleChange}
-                  className="input"
-                >
-                  <option value="CC">Cédula de Ciudadanía</option>
-                  <option value="CE">Cédula de Extranjería</option>
-                  <option value="NIT">NIT</option>
-                  <option value="PP">Pasaporte</option>
-                </select>
-              </div>
-              <div>
-                <label htmlFor="documentNumber" className="block text-sm font-medium text-gray-700 mb-2">
-                  Número de documento *
+                <label htmlFor="fullName" className="block text-xs font-medium text-gray-700 mb-1">
+                  Nombre completo
                 </label>
                 <input
                   type="text"
-                  id="documentNumber"
-                  name="documentNumber"
-                  value={formData.documentNumber}
+                  id="fullName"
+                  name="fullName"
+                  value={formData.fullName}
                   onChange={handleChange}
-                  className={`input ${errors.documentNumber ? 'input-error' : ''}`}
-                  placeholder="1234567890"
+                  className={`w-full px-3 py-2 rounded-md border ${errors.fullName ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm`}
+                  placeholder="Juan Pérez"
                 />
-                {errors.documentNumber && (
-                  <p className="text-red-500 text-sm mt-1">{errors.documentNumber}</p>
+                {errors.fullName && (
+                  <p className="text-red-500 text-xs mt-0.5">{errors.fullName}</p>
                 )}
               </div>
-            </div>
 
-            {/* Address */}
-            <div>
-              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
-                Dirección *
-              </label>
-              <input
-                type="text"
-                id="address"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                className={`input ${errors.address ? 'input-error' : ''}`}
-                placeholder="Calle 123 #45-67"
-              />
-              {errors.address && (
-                <p className="text-red-500 text-sm mt-1">{errors.address}</p>
-              )}
-            </div>
-
-            {/* City & Country */}
-            <div className="grid grid-cols-2 gap-4">
+              {/* Email */}
               <div>
-                <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
-                  Ciudad *
+                <label htmlFor="email" className="block text-xs font-medium text-gray-700 mb-1">
+                  Email
                 </label>
                 <input
-                  type="text"
-                  id="city"
-                  name="city"
-                  value={formData.city}
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
                   onChange={handleChange}
-                  className={`input ${errors.city ? 'input-error' : ''}`}
-                  placeholder="Bogotá"
+                  className={`w-full px-3 py-2 rounded-md border ${errors.email ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm`}
+                  placeholder="juan@ejemplo.com"
                 />
-                {errors.city && (
-                  <p className="text-red-500 text-sm mt-1">{errors.city}</p>
+                {errors.email && (
+                  <p className="text-red-500 text-xs mt-0.5">{errors.email}</p>
                 )}
               </div>
+
+              {/* Phone */}
               <div>
-                <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-2">
-                  País *
+                <label htmlFor="phone" className="block text-xs font-medium text-gray-700 mb-1">
+                  Teléfono
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className={`w-full px-3 py-2 rounded-md border ${errors.phone ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm`}
+                  placeholder="+57 300 123 4567"
+                />
+                {errors.phone && (
+                  <p className="text-red-500 text-xs mt-0.5">{errors.phone}</p>
+                )}
+              </div>
+
+              <div className="border-t border-gray-200 my-3"></div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label htmlFor="documentType" className="block text-xs font-medium text-gray-700 mb-1">
+                    Tipo Doc.
+                  </label>
+                  <select
+                    id="documentType"
+                    name="documentType"
+                    value={formData.documentType}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm"
+                  >
+                    <option value="CC">Cédula</option>
+                    <option value="CE">CE</option>
+                    <option value="NIT">NIT</option>
+                    <option value="PP">Pasaporte</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="documentNumber" className="block text-xs font-medium text-gray-700 mb-1">
+                    Número
+                  </label>
+                  <input
+                    type="text"
+                    id="documentNumber"
+                    name="documentNumber"
+                    value={formData.documentNumber}
+                    onChange={handleChange}
+                    className={`w-full px-3 py-2 rounded-md border ${errors.documentNumber ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm`}
+                    placeholder="1234567890"
+                  />
+                  {errors.documentNumber && (
+                    <p className="text-red-500 text-xs mt-0.5">{errors.documentNumber}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="border-t border-gray-200 my-3"></div>
+
+              {/* Address */}
+              <div>
+                <label htmlFor="address" className="block text-xs font-medium text-gray-700 mb-1">
+                  Dirección
                 </label>
                 <input
                   type="text"
-                  id="country"
-                  name="country"
-                  value={formData.country}
+                  id="address"
+                  name="address"
+                  value={formData.address}
                   onChange={handleChange}
-                  className="input"
-                  placeholder="Colombia"
+                  className={`w-full px-3 py-2 rounded-md border ${errors.address ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm`}
+                  placeholder="Calle 123 #45-67"
                 />
+                {errors.address && (
+                  <p className="text-red-500 text-xs mt-0.5">{errors.address}</p>
+                )}
               </div>
-            </div>
+
+              {/* City & Country */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label htmlFor="city" className="block text-xs font-medium text-gray-700 mb-1">
+                    Ciudad
+                  </label>
+                  <input
+                    type="text"
+                    id="city"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleChange}
+                    className={`w-full px-3 py-2 rounded-md border ${errors.city ? 'border-red-400' : 'border-gray-300'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm`}
+                    placeholder="Bogotá"
+                  />
+                  {errors.city && (
+                    <p className="text-red-500 text-xs mt-0.5">{errors.city}</p>
+                  )}
+                </div>
+                <div>
+                  <label htmlFor="country" className="block text-xs font-medium text-gray-700 mb-1">
+                    País
+                  </label>
+                  <input
+                    type="text"
+                    id="country"
+                    name="country"
+                    value={formData.country}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 rounded-md border border-gray-300 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-sm"
+                    placeholder="Colombia"
+                  />
+                </div>
+              </div>
 
             {/* Buttons */}
-            <div className="flex justify-between pt-4">
+            <div className="flex gap-2 pt-4">
               <button
                 type="button"
                 onClick={() => navigate(-1)}
-                className="btn btn-secondary"
+                className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 transition"
                 disabled={loading}
               >
-                ← Atrás
+                Atrás
               </button>
               <button
                 type="submit"
-                className="btn btn-primary"
+                className="flex-1 px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={loading}
               >
-                {loading ? 'Guardando...' : 'Continuar al pago →'}
+                {loading ? 'Guardando...' : 'Continuar'}
               </button>
             </div>
           </form>
