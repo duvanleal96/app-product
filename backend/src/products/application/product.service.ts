@@ -74,7 +74,9 @@ export class ProductService {
     const product = await this.findById(id);
 
     if (product.stock < quantity) {
-      throw new Error(`Insufficient stock for product ${product.name}. Available: ${product.stock}, Requested: ${quantity}`);
+      throw new Error(
+        `Insufficient stock for product ${product.name}. Available: ${product.stock}, Requested: ${quantity}`,
+      );
     }
 
     const newStock = product.stock - quantity;

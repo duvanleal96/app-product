@@ -81,14 +81,17 @@ export const ErrorMessages: Record<ErrorCode, string> = {
   // Payment Gateway
   [ErrorCode.PAYMENT_GATEWAY_ERROR]: 'Error en la pasarela de pago',
   [ErrorCode.PAYMENT_GATEWAY_TIMEOUT]: 'Timeout en la pasarela de pago',
-  [ErrorCode.PAYMENT_GATEWAY_INVALID_CREDENTIALS]: 'Credenciales de pago inválidas',
+  [ErrorCode.PAYMENT_GATEWAY_INVALID_CREDENTIALS]:
+    'Credenciales de pago inválidas',
   [ErrorCode.PAYMENT_GATEWAY_CARD_DECLINED]: 'Tarjeta rechazada',
-  [ErrorCode.PAYMENT_GATEWAY_INSUFFICIENT_FUNDS]: 'Fondos insuficientes en la tarjeta',
+  [ErrorCode.PAYMENT_GATEWAY_INSUFFICIENT_FUNDS]:
+    'Fondos insuficientes en la tarjeta',
 
   // Database
   [ErrorCode.DATABASE_CONNECTION_ERROR]: 'Error de conexión a la base de datos',
   [ErrorCode.DATABASE_QUERY_ERROR]: 'Error en la consulta a la base de datos',
-  [ErrorCode.DATABASE_CONSTRAINT_ERROR]: 'Error de restricción en la base de datos',
+  [ErrorCode.DATABASE_CONSTRAINT_ERROR]:
+    'Error de restricción en la base de datos',
 
   // General
   [ErrorCode.INTERNAL_SERVER_ERROR]: 'Error interno del servidor',

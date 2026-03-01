@@ -50,7 +50,7 @@ export class CustomerService {
    */
   async findOrCreate(createCustomerDto: CreateCustomerDto): Promise<Customer> {
     const existingCustomer = await this.findByEmail(createCustomerDto.email);
-    
+
     if (existingCustomer) {
       // Si el customer ya existe, actualizamos sus datos con la nueva información
       return this.customerRepository.update(

@@ -34,7 +34,7 @@ export interface WompiWebhookSignature {
   checksum: string; // Hash SHA256 calculado
 }
 
-export type WompiEventType = 
-  | 'transaction.updated' 
-  | 'nequi_token.updated' 
+export type WompiEventType =
+  | 'transaction.updated'
+  | 'nequi_token.updated'
   | 'bancolombia_transfer_token.updated';

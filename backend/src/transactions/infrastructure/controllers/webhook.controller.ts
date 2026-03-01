@@ -5,7 +5,6 @@ import {
   Headers,
   HttpCode,
   HttpStatus,
-  BadRequestException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { TransactionService } from '../../application/transaction.service';
@@ -15,7 +14,7 @@ import { LoggerService } from '../../../shared/infrastructure/logger/logger.serv
 
 /**
  * Controller para recibir webhooks de Wompi
- * 
+ *
  * Wompi envía notificaciones POST a esta URL cuando cambia el estado de una transacción.
  * Debemos responder con HTTP 200 para confirmar la recepción.
  * Si no respondemos 200, Wompi reintentará hasta 3 veces en 24 horas.
@@ -35,7 +34,7 @@ export class WebhookController {
   /**
    * Endpoint para recibir eventos de Wompi
    * URL a configurar en Wompi Dashboard: https://tu-dominio.com/webhooks/wompi
-   * 
+   *
    * @param eventData - Datos del evento enviado por Wompi
    * @param checksum - Firma SHA256 enviada en el header X-Event-Checksum
    */
