@@ -17,6 +17,7 @@ module.exports = {
     '!src/**/*.entity.ts',
     '!src/**/*.interface.ts',
     '!src/config/**',
+    '!src/database/seeds/**',
   ],
   coverageDirectory: './coverage',
   moduleNameMapper: {
