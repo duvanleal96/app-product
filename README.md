@@ -15,8 +15,8 @@
 **Backend**: NestJS 10 + TypeORM + PostgreSQL 15  
 **Frontend**: React 19 + Vite + Redux Toolkit + Tailwind CSS 4  
 **Testing**: Vitest (Frontend) + Jest (Backend)  
-**Deploy**: Railway + Vercel  
-**Pagos**: Wompi API (sandbox)
+**Deploy**: AWS (EC2, RDS, S3)  
+**Pagos**: Pasarela de pago externa (API REST)
 
 ---
 
@@ -146,6 +146,56 @@ Los servicios utilizan un patrón de manejo de errores inspirado en ROP: cada op
 - **Use Case**: [ProductService](backend/src/products/application/product.service.ts) (lógica de negocio)
 - **Adapter**: [ProductController](backend/src/products/infrastructure/controllers/product.controller.ts) (HTTP)
 - **Adapter**: [TypeOrmProductRepository](backend/src/products/infrastructure/persistence/typeorm-product.repository.ts) (persistencia)
+
+---
+
+## 🛒 Flujo de Compras - Métodos Principales
+
+### Servicios Core del Flujo
+
+#### **ProductService**
+```typescript
+// Consulta de productos
+findAll(): Promise<Product[]>
+findById(id: string): Promise<Product>
+findAvailable(): Promise<Product[]>
+findByCategory(category: string): Promise<Product[]>
+
+// Gestión de stock
+reduceStock(id: string, quantity: number): Promise<Product>
+```
+
+#### **CustomerService**
+```typescript
+// Gestión de clientes
+findById(id: string): Promise<Customer>
+findOrCreate(dto: CreateCustomerDto): Promise<Customer>
+create(dto: CreateCustomerDto): Promise<Customer>
+```
+
+#### **TransactionService**
+```typescript
+// Creación y consulta
+create(dto: CreateTransactionDto): Promise<Transaction>
+findById(id: string): Promise<Transaction>
+findByCustomerId(customerId: string): Promise<Transaction[]>
+findByStatus(status: string): Promise<Transaction[]>
+
+// Procesamiento de pago
+processPayment(id: string, dto: ProcessPaymentDto): Promise<Transaction>
+syncPaymentStatus(id: string): Promise<Transaction>
+
+// Webhooks
+updateTransactionFromWebhook(id: string, status: string, externalId: string, data: any): Promise<Transaction>
+```
+
+#### **DeliveryService**
+```typescript
+// Gestión de entregas
+create(dto: CreateDeliveryDto): Promise<Delivery>
+findById(id: string): Promise<Delivery>
+update(id: string, dto: UpdateDeliveryDto): Promise<Delivery>
+```
 
 ---
 
@@ -280,18 +330,162 @@ All files                 |   79.63 |    62.30 |   96.06 |   78.61 |
 
 ---
 
-## 🔑 Credenciales Wompi (Sandbox)
+## 🌐 API Endpoints - Flujo de Compras
+
+### **Productos**
+
+| Método | Endpoint | Descripción | Usado en Flujo |
+|--------|----------|-------------|----------------|
+| GET | `/api/products` | Listar todos los productos | ✅ Paso 1 |
+| GET | `/api/products/available` | Productos con stock > 0 | ✅ Paso 1 |
+| GET | `/api/products/:id` | Detalle de un producto | ✅ Paso 2 |
+| GET | `/api/products/category/:category` | Productos por categoría | ⚪ Opcional |
+
+### **Clientes**
+
+| Método | Endpoint | Descripción | Usado en Flujo |
+|--------|----------|-------------|----------------|
+| POST | `/api/customers/find-or-create` | Crear o buscar cliente | ✅ Paso 3 |
+| GET | `/api/customers/:id` | Consultar cliente | ⚪ Interno |
+
+### **Transacciones**
+
+| Método | Endpoint | Descripción | Usado en Flujo |
+|--------|----------|-------------|----------------|
+| POST | `/api/transactions` | Crear transacción (pre-pago) | ✅ Paso 3 |
+| GET | `/api/transactions/:id` | Consultar estado de transacción | ✅ Paso 5 |
+| POST | `/api/transactions/:id/process-payment` | Procesar pago con pasarela | ✅ Paso 4 |
+| POST | `/api/transactions/:id/sync-status` | Sincronizar con pasarela | ⚪ Interno |
+| GET | `/api/transactions/customer/:customerId` | Historial de compras | ⚪ Opcional |
+| GET | `/api/transactions?status=APPROVED` | Filtrar por estado | ⚪ Admin |
+
+### **Webhooks**
+
+| Método | Endpoint | Descripción | Usado en Flujo |
+|--------|----------|-------------|----------------|
+| POST | `/api/webhooks/payment` | Recibir notificaciones de pasarela | ⚪ Callback |
+
+### **Deliveries**
+
+| Método | Endpoint | Descripción | Usado en Flujo |
+|--------|----------|-------------|----------------|
+| POST | `/api/deliveries` | Crear registro de entrega | ⚪ Interno |
+| GET | `/api/deliveries/:id` | Consultar datos de entrega | ⚪ Interno |
+| PUT | `/api/deliveries/:id` | Actualizar dirección | ⚪ Admin |
+
+---
+
+## ☁️ Despliegue en AWS
+
+### Arquitectura de Producción
 
 ```
-Public Key:  pub_stagtest_g2u0HQd3ZMh05hsSgTS2lUV8t3s4mOt7
-Private Key: prv_stagtest_5i0ZGIGiFcDQifYsXxvsny7Y37tKqFWg
-Integrity:   stagtest_integrity_nAIBuqayW70XpUqJS4qf4STYiISd89Fp
-API URL:     https://api-sandbox.co.uat.wompi.dev/v1
+┌─────────────────────────────────────────────────┐
+│                  CloudFront CDN                 │
+│         (Distribución Frontend Vite)            │
+└────────────────┬────────────────────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────────────────────┐
+│                S3 Bucket (Static)               │
+│         frontend-build/ (React SPA)             │
+└─────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────┐
+│        Application Load Balancer (ALB)          │
+│              HTTPS (SSL/TLS)                    │
+└────────────────┬────────────────────────────────┘
+                 │
+        ┌────────┴────────┐
+        ▼                 ▼
+┌──────────────┐  ┌──────────────┐
+│   EC2 (1)    │  │   EC2 (2)    │
+│  NestJS API  │  │  NestJS API  │
+│   (Docker)   │  │   (Docker)   │
+└──────┬───────┘  └──────┬────────┘
+       │                 │
+       └────────┬─────────┘
+                ▼
+┌─────────────────────────────────┐
+│       RDS PostgreSQL 15         │
+│      (Multi-AZ deployment)      │
+│   ecommerce_prod (database)     │
+└─────────────────────────────────┘
+
+┌─────────────────────────────────┐
+│        Secrets Manager          │
+│  (DB credentials, API keys)     │
+└─────────────────────────────────┘
 ```
 
-**Tarjetas de prueba**:
-- ✅ Éxito: `4242 4242 4242 4242` (cualquier CVV futuro)
-- ❌ Error: `4111 1111 1111 1111`
+### Servicios AWS Utilizados
+
+**Compute & Networking:**
+- **EC2** (t3.medium) — 2 instancias para NestJS backend
+- **Application Load Balancer** — Distribución de carga + SSL/TLS
+- **VPC** — Red privada con subnets públicas/privadas
+- **Security Groups** — Firewall para EC2 y RDS
+
+**Storage & Database:**
+- **RDS PostgreSQL 15** (db.t3.micro) — Base de datos con backup automático
+- **S3** — Hosting del frontend estático (React build)
+- **CloudFront** — CDN para el frontend
+
+**Security & Secrets:**
+- **Secrets Manager** — Credenciales de DB y API keys
+- **IAM Roles** — Permisos para EC2 acceder a Secrets Manager
+- **ACM (Certificate Manager)** — Certificados SSL/TLS
+
+**Monitoring:**
+- **CloudWatch** — Logs de aplicación y métricas
+- **CloudWatch Alarms** — Alertas de errores y alta latencia
+
+### Variables de Entorno (Secrets Manager)
+
+```bash
+# Database
+DB_HOST=ecommerce-prod.abc123.us-east-1.rds.amazonaws.com
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=<stored-in-secrets-manager>
+DB_NAME=ecommerce_prod
+
+# Payment Gateway
+PAYMENT_PUBLIC_KEY=<stored-in-secrets-manager>
+PAYMENT_PRIVATE_KEY=<stored-in-secrets-manager>
+PAYMENT_WEBHOOK_SECRET=<stored-in-secrets-manager>
+PAYMENT_API_URL=https://api.payment-provider.com/v1
+
+# Application
+NODE_ENV=production
+PORT=3000
+FRONTEND_URL=https://ecommerce.example.com
+```
+
+### Comandos de Deploy
+
+```bash
+# Backend - Build y Docker
+cd backend
+docker build -t ecommerce-api:latest .
+docker tag ecommerce-api:latest <ECR_URI>:latest
+docker push <ECR_URI>:latest
+
+# Conectar a EC2 y actualizar
+ssh -i key.pem ec2-user@<EC2_IP>
+docker pull <ECR_URI>:latest
+docker-compose up -d
+
+# Frontend - Build y S3
+cd frontend
+npm run build
+aws s3 sync dist/ s3://ecommerce-frontend-bucket --delete
+aws cloudfront create-invalidation --distribution-id <ID> --paths "/*"
+
+# Migrations (solo una vez)
+ssh -i key.pem ec2-user@<EC2_IP>
+cd /app && npm run migration:run
+```
 
 ---
 
@@ -313,14 +507,23 @@ npm install
 docker-compose up -d
 ```
 
-### Desarrollo
+### Desarrollo Local
 ```bash
+# Base de datos (PostgreSQL con Docker)
+docker-compose up -d
+
 # Backend (puerto 3000)
-cd backend && npm run start:dev
+cd backend
+npm install
+npm run seed        # Poblar DB con 10 productos
+npm run start:dev   # Hot-reload activado
 
 # Frontend (puerto 5173)
-cd frontend && npm run dev
+cd frontend
+npm install
+npm run dev         # Vite dev server
 ```
+
 
 ### Tests
 ```bash
@@ -336,12 +539,64 @@ cd backend && npm run test:cov
 ## 📊 Flujo de 5 Pasos (Business Process)
 
 ```
-1. Ver Productos → 2. Seleccionar → 3. Datos Cliente → 4. Pago → 5. Resultado
+┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+│   Paso 1    │ → │   Paso 2    │ → │   Paso 3    │ → │   Paso 4    │ → │   Paso 5    │
+│  Productos  │   │  Selección  │   │   Cliente   │   │    Pago     │   │  Resultado  │
+└─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘   └─────────────┘
 ```
 
-**Endpoints necesarios**:
-- `GET /api/products` - Listar productos
-- `POST /api/transactions` - Crear transacción
-- `POST /api/transactions/:id/process-payment` - Procesar pago
-- `GET /api/transactions/:id` - Ver resultado
+### Detalle del Flujo
+
+**1. Ver Productos** 🛍️
+- Endpoint: `GET /api/products` o `GET /api/products/available`
+- Frontend carga catálogo y muestra cards
+- Usuario navega por categorías
+
+**2. Seleccionar Producto** 📦
+- Endpoint: `GET /api/products/:id`
+- Usuario ve detalle (precio, stock, descripción)
+- Agrega al carrito (Redux state)
+
+**3. Datos del Cliente** 📝
+- Endpoint: `POST /api/customers/find-or-create`
+- Usuario llena formulario (nombre, email, teléfono, dirección)
+- Endpoint: `POST /api/transactions`
+- Se crea Transaction con status `PENDING`
+- Se crea registro Delivery con dirección de entrega
+
+**4. Procesar Pago** 💳
+- Endpoint: `POST /api/transactions/:id/process-payment`
+- Usuario ingresa datos de tarjeta
+- Backend tokeniza tarjeta con pasarela externa
+- Backend ejecuta cargo en pasarela
+- Pasarela responde APPROVED/DECLINED
+- Si APPROVED: `ProductService.reduceStock()` se ejecuta
+- Transaction status cambia a `APPROVED` o `DECLINED`
+
+**5. Ver Resultado** ✅
+- Endpoint: `GET /api/transactions/:id`
+- Frontend consulta estado final
+- Muestra mensaje de éxito o error
+- Si APPROVED: muestra número de referencia y datos de entrega
+
+### Endpoints Críticos del Flujo
+
+| Paso | Endpoint | Método | Propósito |
+|------|----------|--------|----------|
+| 1 | `/api/products/available` | GET | Obtener productos con stock |
+| 2 | `/api/products/:id` | GET | Detalle del producto |
+| 3a | `/api/customers/find-or-create` | POST | Registrar/buscar cliente |
+| 3b | `/api/transactions` | POST | Crear transacción `PENDING` |
+| 4 | `/api/transactions/:id/process-payment` | POST | Ejecutar pago con pasarela |
+| 5 | `/api/transactions/:id` | GET | Consultar resultado final |
+
+### Webhook Asíncrono (Opcional)
+
+Algunas pasarelas envían confirmación asíncrona:
+
+```
+Pasarela Externa → POST /api/webhooks/payment
+                 → TransactionService.updateTransactionFromWebhook()
+                 → Actualiza status a APPROVED si llegó tarde
+```
 
