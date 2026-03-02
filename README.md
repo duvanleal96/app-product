@@ -15,8 +15,21 @@
 **Backend**: NestJS 10 + TypeORM + PostgreSQL 15  
 **Frontend**: React 19 + Vite + Redux Toolkit + Tailwind CSS 4  
 **Testing**: Vitest (Frontend) + Jest (Backend)  
-**Deploy**: AWS (EC2, RDS, S3)  
+**Deploy**: AWS (S3 Static Hosting + EC2 + RDS PostgreSQL)  
 **Pagos**: Pasarela de pago externa (API REST)
+
+---
+
+## 🌐 URLs de Producción
+
+**Frontend (S3 Static Website):**  
+🔗 http://frontend-app-product.s3-website.us-east-2.amazonaws.com
+
+**Backend API (EC2 directo):**  
+🔗 http://13.58.145.75:3000/api
+
+**Base de Datos:**  
+RDS PostgreSQL 15 (us-east-2) — Privada, acceso solo desde EC2
 
 ---
 
@@ -375,116 +388,180 @@ All files                 |   79.63 |    62.30 |   96.06 |   78.61 |
 
 ---
 
-## ☁️ Despliegue en AWS
+## ☁️ Deploy Real en AWS
 
-### Arquitectura de Producción
+### Arquitectura Implementada
 
 ```
-┌─────────────────────────────────────────────────┐
-│                  CloudFront CDN                 │
-│         (Distribución Frontend Vite)            │
-└────────────────┬────────────────────────────────┘
-                 │
-                 ▼
-┌─────────────────────────────────────────────────┐
-│                S3 Bucket (Static)               │
-│         frontend-build/ (React SPA)             │
-└─────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────┐
-│        Application Load Balancer (ALB)          │
-│              HTTPS (SSL/TLS)                    │
-└────────────────┬────────────────────────────────┘
-                 │
-        ┌────────┴────────┐
-        ▼                 ▼
-┌──────────────┐  ┌──────────────┐
-│   EC2 (1)    │  │   EC2 (2)    │
-│  NestJS API  │  │  NestJS API  │
-│   (Docker)   │  │   (Docker)   │
-└──────┬───────┘  └──────┬────────┘
-       │                 │
-       └────────┬─────────┘
-                ▼
-┌─────────────────────────────────┐
-│       RDS PostgreSQL 15         │
-│      (Multi-AZ deployment)      │
-│   ecommerce_prod (database)     │
-└─────────────────────────────────┘
-
-┌─────────────────────────────────┐
-│        Secrets Manager          │
-│  (DB credentials, API keys)     │
-└─────────────────────────────────┘
+┌──────────────────────────────────────────────┐
+│  Usuario                                     │
+└──────────┬───────────────────────────────────┘
+           │
+           ├────────────────┐
+           │                │
+           ▼                ▼
+┌─────────────────┐  ┌─────────────────────────┐
+│   S3 Bucket     │  │   EC2 Instance          │
+│  Static Website │  │   Ubuntu + Node.js      │
+│                 │  │                         │
+│ frontend-app-   │  │   Backend NestJS        │
+│   product       │  │   Puerto: 3000          │
+│                 │  │                         │
+│  React SPA      │  │   IP: 13.58.145.75      │
+│  (HTTP only)    │  │                         │
+└─────────────────┘  └──────────┬──────────────┘
+                                │
+                                │ (SSL habilitado)
+                                ▼
+                     ┌──────────────────────────┐
+                     │  RDS PostgreSQL 15       │
+                     │  database-1              │
+                     │  us-east-2               │
+                     │  (privado, puerto 5432)  │
+                     └──────────────────────────┘
 ```
 
 ### Servicios AWS Utilizados
 
-**Compute & Networking:**
-- **EC2** (t3.medium) — 2 instancias para NestJS backend
-- **Application Load Balancer** — Distribución de carga + SSL/TLS
-- **VPC** — Red privada con subnets públicas/privadas
-- **Security Groups** — Firewall para EC2 y RDS
+#### **1. S3 (Simple Storage Service)**
+- **Bucket**: `frontend-app-product`
+- **Configuración**: Static Website Hosting habilitado
+- **Acceso**: Público (Bucket Policy permite GetObject)
+- **Contenido**: Build de React (HTML, JS, CSS)
+- **URL**: http://frontend-app-product.s3-website.us-east-2.amazonaws.com
 
-**Storage & Database:**
-- **RDS PostgreSQL 15** (db.t3.micro) — Base de datos con backup automático
-- **S3** — Hosting del frontend estático (React build)
-- **CloudFront** — CDN para el frontend
+#### **2. EC2 (Elastic Compute Cloud)**
+- **Instancia**: Ubuntu Server
+- **IP Pública**: 13.58.145.75
+- **Software instalado**:
+  - Node.js (backend NestJS)
+  - PM2 (process manager para Node.js)
+- **Security Group**:
+  - Puerto 22 (SSH)
+  - Puerto 3000 (HTTP - NestJS directo)
 
-**Security & Secrets:**
-- **Secrets Manager** — Credenciales de DB y API keys
-- **IAM Roles** — Permisos para EC2 acceder a Secrets Manager
-- **ACM (Certificate Manager)** — Certificados SSL/TLS
+#### **3. RDS (Relational Database Service)**
+- **Motor**: PostgreSQL 15
+- **Instancia**: `database-1`
+- **Región**: us-east-2 (Ohio)
+- **Acceso**: Privado (Security Group permite solo desde EC2)
+- **Conexión SSL**: Habilitada (rejectUnauthorized: false)
+- **Puerto**: 5432
 
-**Monitoring:**
-- **CloudWatch** — Logs de aplicación y métricas
-- **CloudWatch Alarms** — Alertas de errores y alta latencia
+### Configuración de Variables de Entorno
 
-### Variables de Entorno (Secrets Manager)
-
+**Backend (.env en EC2):**
 ```bash
-# Database
-DB_HOST=ecommerce-prod.abc123.us-east-1.rds.amazonaws.com
+# Database RDS
+DB_HOST=database-1.cbs2okuoypyd.us-east-2.rds.amazonaws.com
 DB_PORT=5432
 DB_USERNAME=postgres
-DB_PASSWORD=<stored-in-secrets-manager>
-DB_NAME=ecommerce_prod
+DB_PASSWORD=ecommerce-dev
+DB_NAME=postgres
 
-# Payment Gateway
-PAYMENT_PUBLIC_KEY=<stored-in-secrets-manager>
-PAYMENT_PRIVATE_KEY=<stored-in-secrets-manager>
-PAYMENT_WEBHOOK_SECRET=<stored-in-secrets-manager>
-PAYMENT_API_URL=https://api.payment-provider.com/v1
+# Payment Gateway (Wompi Sandbox)
+WOMPI_API_URL=https://api-sandbox.co.uat.wompi.dev/v1
+WOMPI_PUBLIC_KEY=pub_stagtest_***
+WOMPI_PRIVATE_KEY=prv_stagtest_***
+WOMPI_EVENTS_KEY=stagtest_events_***
+WOMPI_INTEGRITY_KEY=stagtest_integrity_***
 
 # Application
-NODE_ENV=production
+NODE_ENV=development
 PORT=3000
-FRONTEND_URL=https://ecommerce.example.com
+CORS_ORIGIN=http://frontend-app-product.s3-website.us-east-2.amazonaws.com
+BASE_FEE=2000
+DELIVERY_FEE=5000
 ```
 
-### Comandos de Deploy
-
+**Frontend (.env.production):**
 ```bash
-# Backend - Build y Docker
+VITE_API_URL=http://13.58.145.75:3000/api
+VITE_APP_NAME=E-commerce App
+VITE_APP_VERSION=1.0.0
+VITE_ENV=production
+```
+
+### Pasos de Deploy Ejecutados
+
+#### **1. Setup Inicial EC2**
+```bash
+# Conectar a EC2
+ssh -i app-product-key.pem ubuntu@13.58.145.75
+
+# Instalar Node.js
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Instalar PM2
+sudo npm install -g pm2
+
+# Clonar repositorio
+git clone https://github.com/duvanleal96/app-product.git
+cd app-product/backend
+npm install
+```
+
+#### **2. Ejecutar Backend con PM2**
+```bash
+cd ~/app-product/backend
+
+# Configurar .env con credenciales RDS
+nano .env
+
+# Ejecutar seed
+npm run seed
+
+# Iniciar con PM2
+pm2 start npm --name "backend" -- run start:prod
+pm2 save
+pm2 startup
+```
+
+#### **3. Deploy Frontend a S3**
+```bash
+# En tu máquina local (Windows)
+cd frontend
+
+# Crear .env.production
+echo "VITE_API_URL=http://13.58.145.75:3000/api" > .env.production
+
+# Build de producción
+npm run build
+
+# Subir a S3 (requiere AWS CLI configurado)
+cd dist
+aws s3 sync . s3://frontend-app-product --delete
+```
+
+#### **4. Configurar CORS en Backend**
+```bash
+# En EC2
+ssh -i app-product-key.pem ubuntu@13.58.145.75
+cd ~/app-product/backend
+nano .env
+
+# Agregar:
+CORS_ORIGIN=http://frontend-app-product.s3-website.us-east-2.amazonaws.com
+
+# Reiniciar backend
+pm2 restart backend
+```
+
+#### **5. Actualizar Deploy (cambios futuros)**
+```bash
+# Backend (en EC2)
+ssh -i app-product-key.pem ubuntu@13.58.145.75
+cd ~/app-product
+git pull origin main
 cd backend
-docker build -t ecommerce-api:latest .
-docker tag ecommerce-api:latest <ECR_URI>:latest
-docker push <ECR_URI>:latest
+npm install
+pm2 restart backend
 
-# Conectar a EC2 y actualizar
-ssh -i key.pem ec2-user@<EC2_IP>
-docker pull <ECR_URI>:latest
-docker-compose up -d
-
-# Frontend - Build y S3
+# Frontend (desde local)
 cd frontend
 npm run build
-aws s3 sync dist/ s3://ecommerce-frontend-bucket --delete
-aws cloudfront create-invalidation --distribution-id <ID> --paths "/*"
-
-# Migrations (solo una vez)
-ssh -i key.pem ec2-user@<EC2_IP>
-cd /app && npm run migration:run
+aws s3 sync dist/ s3://frontend-app-product --delete
 ```
 
 ---
@@ -536,7 +613,130 @@ cd backend && npm run test:cov
 
 ---
 
-## 📊 Flujo de 5 Pasos (Business Process)
+## � Productos de Prueba (Seed Data)
+
+La base de datos se puebla automáticamente con 10 productos de prueba al ejecutar `npm run seed`:
+
+```json
+[
+  {
+    "name": "Laptop HP Pavilion 15",
+    "description": "Laptop de alto rendimiento con procesador Intel Core i7, 16GB RAM, 512GB SSD",
+    "price": 2499000,
+    "stock": 15,
+    "category": "Electrónica",
+    "imageUrl": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&h=400&fit=crop",
+    "isActive": true
+  },
+  {
+    "name": "iPhone 14 Pro Max",
+    "description": "Smartphone Apple con pantalla de 6.7\", cámara de 48MP, chip A16 Bionic",
+    "price": 5499000,
+    "stock": 8,
+    "category": "Electrónica",
+    "imageUrl": "https://images.unsplash.com/photo-1678652197831-2d180705cd2c?w=600&h=400&fit=crop",
+    "isActive": true
+  },
+  {
+    "name": "Samsung Galaxy S23 Ultra",
+    "description": "Smartphone con pantalla AMOLED de 6.8\", S Pen incluido, 256GB",
+    "price": 4799000,
+    "stock": 12,
+    "category": "Electrónica",
+    "imageUrl": "https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=600&h=400&fit=crop",
+    "isActive": true
+  },
+  {
+    "name": "AirPods Pro 2",
+    "description": "Auriculares inalámbricos con cancelación activa de ruido",
+    "price": 899000,
+    "stock": 25,
+    "category": "Audio",
+    "imageUrl": "https://images.unsplash.com/photo-1606841837239-c5a1a4a07af7?w=600&h=400&fit=crop",
+    "isActive": true
+  },
+  {
+    "name": "Sony WH-1000XM5",
+    "description": "Audífonos over-ear con la mejor cancelación de ruido del mercado",
+    "price": 1299000,
+    "stock": 18,
+    "category": "Audio",
+    "imageUrl": "https://images.unsplash.com/photo-1545127398-14699f92334b?w=600&h=400&fit=crop",
+    "isActive": true
+  },
+  {
+    "name": "Apple Watch Series 9",
+    "description": "Smartwatch con GPS, monitor de salud y fitness, pantalla Retina",
+    "price": 1899000,
+    "stock": 20,
+    "category": "Wearables",
+    "imageUrl": "https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=600&h=400&fit=crop",
+    "isActive": true
+  },
+  {
+    "name": "iPad Air M2",
+    "description": "Tablet con chip M2, pantalla Liquid Retina de 10.9\", 256GB",
+    "price": 3299000,
+    "stock": 10,
+    "category": "Electrónica",
+    "imageUrl": "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600&h=400&fit=crop",
+    "isActive": true
+  },
+  {
+    "name": "MacBook Pro M3",
+    "description": "Laptop profesional con chip M3, 16GB RAM, 512GB SSD, pantalla de 14\"",
+    "price": 8999000,
+    "stock": 5,
+    "category": "Electrónica",
+    "imageUrl": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&h=400&fit=crop",
+    "isActive": true
+  },
+  {
+    "name": "Nintendo Switch OLED",
+    "description": "Consola de videojuegos híbrida con pantalla OLED de 7\"",
+    "price": 1499000,
+    "stock": 30,
+    "category": "Gaming",
+    "imageUrl": "https://images.unsplash.com/photo-1578303512597-81e6cc155b3e?w=600&h=400&fit=crop",
+    "isActive": true
+  },
+  {
+    "name": "PlayStation 5",
+    "description": "Consola de última generación con SSD ultra rápido, 825GB",
+    "price": 2799000,
+    "stock": 7,
+    "category": "Gaming",
+    "imageUrl": "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=600&h=400&fit=crop",
+    "isActive": true
+  }
+]
+```
+
+**Resumen:**
+- 🖥️ **Electrónica**: 6 productos
+- 🎧 **Audio**: 2 productos
+- ⌚ **Wearables**: 1 producto
+- 🎮 **Gaming**: 2 productos
+- **Total inventario**: 150 unidades
+- **Valor total**: $30,391,000
+
+**Comandos:**
+```bash
+# Poblar base de datos (desarrollo local)
+cd backend && npm run seed
+
+# Poblar y limpiar datos existentes
+npm run seed -- --fresh
+
+# Poblar base de datos en producción (EC2)
+ssh -i app-product-key.pem ubuntu@13.58.145.75
+cd ~/app-product/backend
+npm run seed
+```
+
+---
+
+## �📊 Flujo de 5 Pasos (Business Process)
 
 ```
 ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
@@ -599,4 +799,451 @@ Pasarela Externa → POST /api/webhooks/payment
                  → TransactionService.updateTransactionFromWebhook()
                  → Actualiza status a APPROVED si llegó tarde
 ```
+
+---
+
+## 📬 Colección Postman - Endpoints del Flujo
+
+Colección completa de Postman con todos los endpoints del flujo de compras. Incluye variables de entorno y ejemplos de request/response.
+
+### Importar Colección
+
+**Paso 1:** Copia el JSON de abajo y guárdalo como `ecommerce-flow.postman_collection.json`
+
+**Paso 2:** En Postman → **Import** → Selecciona el archivo o pega el JSON directamente
+
+**Paso 3:** Configura las variables de entorno:
+- `{{base_url}}`: `http://13.58.145.75:3000` (producción) o `http://localhost:3000` (local)
+
+### Colección JSON
+
+```json
+{
+  "info": {
+    "name": "E-commerce Flow - API Endpoints",
+    "_postman_id": "ecommerce-flow-2026",
+    "description": "Colección completa del flujo de compras del e-commerce con integración de pagos",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://13.58.145.75:3000",
+      "type": "string"
+    },
+    {
+      "key": "product_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customer_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "transaction_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Paso 1 - Productos",
+      "item": [
+        {
+          "name": "Listar productos disponibles",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.length > 0) {",
+                  "        pm.collectionVariables.set('product_id', response[0].id);",
+                  "        console.log('Product ID guardado:', response[0].id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products/available",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", "available"]
+            },
+            "description": "Obtiene todos los productos con stock disponible (stock > 0)"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "body": "[\n  {\n    \"id\": \"uuid-123\",\n    \"name\": \"Laptop HP Pavilion 15\",\n    \"description\": \"Laptop de alto rendimiento\",\n    \"price\": 2499000,\n    \"stock\": 15,\n    \"category\": \"Electrónica\",\n    \"imageUrl\": \"https://images.unsplash.com/...\",\n    \"isActive\": true\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Obtener detalle de producto",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products/:productId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", ":productId"],
+              "variable": [
+                {
+                  "key": "productId",
+                  "value": "{{product_id}}",
+                  "description": "ID del producto"
+                }
+              ]
+            },
+            "description": "Obtiene el detalle completo de un producto específico"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Paso 3 - Cliente y Transacción",
+      "item": [
+        {
+          "name": "Crear o buscar cliente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('customer_id', response.id);",
+                  "    console.log('Customer ID guardado:', response.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Juan Pérez\",\n  \"email\": \"juan.perez@example.com\",\n  \"phone\": \"3001234567\",\n  \"address\": \"Calle 123 #45-67\",\n  \"city\": \"Bogotá\",\n  \"documentType\": \"CC\",\n  \"documentNumber\": \"1234567890\",\n  \"country\": \"CO\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/customers/find-or-create",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers", "find-or-create"]
+            },
+            "description": "Crea un nuevo cliente o retorna uno existente basado en el email"
+          },
+          "response": []
+        },
+        {
+          "name": "Crear transacción (pre-pago)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('transaction_id', response.id);",
+                  "    console.log('Transaction ID guardado:', response.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": \"{{customer_id}}\",\n  \"productId\": \"{{product_id}}\",\n  \"quantity\": 1,\n  \"delivery\": {\n    \"fullName\": \"Juan Pérez\",\n    \"address\": \"Calle 123 #45-67 Apto 301\",\n    \"city\": \"Bogotá\",\n    \"department\": \"Cundinamarca\",\n    \"postalCode\": \"110111\",\n    \"phone\": \"3001234567\",\n    \"notes\": \"Entregar en horario de oficina\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/transactions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transactions"]
+            },
+            "description": "Crea una transacción con estado PENDING antes de procesar el pago"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Paso 4 - Procesar Pago",
+      "item": [
+        {
+          "name": "Procesar pago con pasarela",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cardNumber\": \"4242424242424242\",\n  \"cardholderName\": \"Juan Perez\",\n  \"expirationMonth\": \"12\",\n  \"expirationYear\": \"2028\",\n  \"cvv\": \"123\",\n  \"installments\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/transactions/:transactionId/process-payment",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transactions", ":transactionId", "process-payment"],
+              "variable": [
+                {
+                  "key": "transactionId",
+                  "value": "{{transaction_id}}",
+                  "description": "ID de la transacción a pagar"
+                }
+              ]
+            },
+            "description": "Procesa el pago de una transacción existente con los datos de la tarjeta"
+          },
+          "response": [
+            {
+              "name": "Pago Aprobado",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": \"uuid-456\",\n  \"status\": \"APPROVED\",\n  \"paymentReference\": \"REF-789\",\n  \"total\": 2506000,\n  \"message\": \"Pago procesado exitosamente\"\n}"
+            },
+            {
+              "name": "Pago Rechazado",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": \"uuid-456\",\n  \"status\": \"DECLINED\",\n  \"message\": \"Pago rechazado por el banco\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Sincronizar estado con pasarela",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/transactions/:transactionId/sync-status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transactions", ":transactionId", "sync-status"],
+              "variable": [
+                {
+                  "key": "transactionId",
+                  "value": "{{transaction_id}}"
+                }
+              ]
+            },
+            "description": "Consulta el estado actual de la transacción en la pasarela de pagos"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Paso 5 - Ver Resultado",
+      "item": [
+        {
+          "name": "Consultar transacción",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/transactions/:transactionId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transactions", ":transactionId"],
+              "variable": [
+                {
+                  "key": "transactionId",
+                  "value": "{{transaction_id}}"
+                }
+              ]
+            },
+            "description": "Obtiene el detalle completo de una transacción con estado final"
+          },
+          "response": [
+            {
+              "name": "Transacción Exitosa",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"id\": \"uuid-456\",\n  \"customer\": {\n    \"id\": \"uuid-789\",\n    \"fullName\": \"Juan Pérez\",\n    \"email\": \"juan.perez@example.com\"\n  },\n  \"product\": {\n    \"id\": \"uuid-123\",\n    \"name\": \"Laptop HP Pavilion 15\",\n    \"price\": 2499000\n  },\n  \"delivery\": {\n    \"address\": \"Calle 123 #45-67 Apto 301\",\n    \"city\": \"Bogotá\"\n  },\n  \"quantity\": 1,\n  \"subtotal\": 2499000,\n  \"baseFee\": 2000,\n  \"deliveryFee\": 5000,\n  \"total\": 2506000,\n  \"status\": \"APPROVED\",\n  \"paymentReference\": \"REF-789\",\n  \"installments\": 1,\n  \"createdAt\": \"2026-03-02T15:30:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar transacciones por cliente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/transactions/customer/:customerId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transactions", "customer", ":customerId"],
+              "variable": [
+                {
+                  "key": "customerId",
+                  "value": "{{customer_id}}"
+                }
+              ]
+            },
+            "description": "Obtiene el historial de compras de un cliente"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "Webhook de pasarela de pagos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Event-Signature",
+                "value": "signature_hash",
+                "description": "Firma del evento para validación"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"event\": \"transaction.updated\",\n  \"data\": {\n    \"transaction\": {\n      \"id\": \"external-txn-123\",\n      \"reference\": \"uuid-456\",\n      \"status\": \"APPROVED\",\n      \"amount_in_cents\": 250600000,\n      \"currency\": \"COP\"\n    }\n  },\n  \"sent_at\": \"2026-03-02T15:35:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/webhooks/payment",
+              "host": ["{{base_url}}"],
+              "path": ["api", "webhooks", "payment"]
+            },
+            "description": "Endpoint para recibir notificaciones asíncronas de la pasarela de pagos"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Consultas Adicionales",
+      "item": [
+        {
+          "name": "Filtrar transacciones por estado",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/transactions?status=APPROVED",
+              "host": ["{{base_url}}"],
+              "path": ["api", "transactions"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "APPROVED",
+                  "description": "PENDING | APPROVED | DECLINED | ERROR | VOIDED"
+                }
+              ]
+            },
+            "description": "Filtra transacciones por su estado"
+          },
+          "response": []
+        },
+        {
+          "name": "Consultar delivery de transacción",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/deliveries/:deliveryId",
+              "host": ["{{base_url}}"],
+              "path": ["api", "deliveries", ":deliveryId"],
+              "variable": [
+                {
+                  "key": "deliveryId",
+                  "value": "uuid-delivery"
+                }
+              ]
+            },
+            "description": "Obtiene los datos de entrega de una transacción"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Variables de Entorno Sugeridas
+
+Puedes crear un Environment en Postman con estas variables:
+
+```json
+{
+  "name": "E-commerce Production",
+  "values": [
+    {
+      "key": "base_url",
+      "value": "http://13.58.145.75:3000",
+      "enabled": true
+    }
+  ]
+}
+```
+
+```json
+{
+  "name": "E-commerce Local",
+  "values": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "enabled": true
+    }
+  ]
+}
+```
+
+### Flujo de Uso Recomendado
+
+1. **Ejecutar en orden:**
+   - Paso 1.1: Listar productos disponibles (guarda `product_id`)
+   - Paso 3.1: Crear o buscar cliente (guarda `customer_id`)
+   - Paso 3.2: Crear transacción (guarda `transaction_id`)
+   - Paso 4.1: Procesar pago
+   - Paso 5.1: Consultar transacción final
+
+2. **Variables automáticas:**
+   - Los scripts de la colección guardan automáticamente los IDs necesarios
+   - Puedes ejecutar toda la secuencia sin editar manualmente
+
+3. **Datos de prueba (Sandbox Wompi):**
+   - **Tarjeta de prueba aprobada**: `4242424242424242`
+   - **Tarjeta de prueba rechazada**: `4111111111111111`
+   - **CVV**: Cualquier 3 dígitos
+   - **Expiración**: Fecha futura
+
+---
 
