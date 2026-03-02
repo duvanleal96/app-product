@@ -117,7 +117,9 @@ describe('ProductRepository', () => {
       const result = await repository.findAvailable();
 
       expect(result).toEqual([mockProduct]);
-      expect(mockTypeormRepository.createQueryBuilder).toHaveBeenCalledWith('product');
+      expect(mockTypeormRepository.createQueryBuilder).toHaveBeenCalledWith(
+        'product',
+      );
       expect(mockQueryBuilder.where).toHaveBeenCalledWith(
         'product.isActive = :isActive',
         { isActive: true },
@@ -126,7 +128,10 @@ describe('ProductRepository', () => {
         'product.stock > :stock',
         { stock: 0 },
       );
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('product.createdAt', 'DESC');
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'product.createdAt',
+        'DESC',
+      );
     });
 
     it('should return empty array when no products available', async () => {
@@ -168,7 +173,10 @@ describe('ProductRepository', () => {
       const result = await repository.update(mockProduct.id, updateData);
 
       expect(result).toEqual(updated);
-      expect(mockTypeormRepository.update).toHaveBeenCalledWith(mockProduct.id, updateData);
+      expect(mockTypeormRepository.update).toHaveBeenCalledWith(
+        mockProduct.id,
+        updateData,
+      );
     });
 
     it('should throw error when product not found after update', async () => {

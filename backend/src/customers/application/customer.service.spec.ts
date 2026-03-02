@@ -142,10 +142,16 @@ describe('CustomerService', () => {
       mockRepository.findById.mockResolvedValue(mockCustomer);
       mockRepository.update.mockResolvedValue(updatedCustomer);
 
-      const result = await service.update(mockCustomer.id, mockUpdateCustomerDto);
+      const result = await service.update(
+        mockCustomer.id,
+        mockUpdateCustomerDto,
+      );
 
       expect(result.fullName).toBe(mockUpdateCustomerDto.fullName);
-      expect(mockRepository.update).toHaveBeenCalledWith(mockCustomer.id, mockUpdateCustomerDto);
+      expect(mockRepository.update).toHaveBeenCalledWith(
+        mockCustomer.id,
+        mockUpdateCustomerDto,
+      );
     });
   });
 

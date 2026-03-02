@@ -93,7 +93,9 @@ describe('CustomerController', () => {
       const result = await controller.findOrCreate(mockCreateCustomerDto);
 
       expect(result).toEqual(mockCustomer);
-      expect(mockCustomerService.findOrCreate).toHaveBeenCalledWith(mockCreateCustomerDto);
+      expect(mockCustomerService.findOrCreate).toHaveBeenCalledWith(
+        mockCreateCustomerDto,
+      );
     });
   });
 
@@ -105,7 +107,9 @@ describe('CustomerController', () => {
       const result = await controller.create(mockCreateCustomerDto);
 
       expect(result).toEqual(newCustomer);
-      expect(mockCustomerService.create).toHaveBeenCalledWith(mockCreateCustomerDto);
+      expect(mockCustomerService.create).toHaveBeenCalledWith(
+        mockCreateCustomerDto,
+      );
     });
   });
 
@@ -114,7 +118,10 @@ describe('CustomerController', () => {
       const updatedCustomer = { ...mockCustomer, ...mockUpdateCustomerDto };
       mockCustomerService.update.mockResolvedValue(updatedCustomer);
 
-      const result = await controller.update(mockCustomer.id, mockUpdateCustomerDto);
+      const result = await controller.update(
+        mockCustomer.id,
+        mockUpdateCustomerDto,
+      );
 
       expect(result).toEqual(updatedCustomer);
       expect(mockCustomerService.update).toHaveBeenCalledWith(

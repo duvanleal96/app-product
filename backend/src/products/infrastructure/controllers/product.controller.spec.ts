@@ -107,7 +107,9 @@ describe('ProductController', () => {
     it('should return null when product not found', async () => {
       mockProductService.findById.mockResolvedValue(null);
 
-      const result = await controller.findOne('123e4567-e89b-12d3-a456-426614174999');
+      const result = await controller.findOne(
+        '123e4567-e89b-12d3-a456-426614174999',
+      );
 
       expect(result).toBeNull();
     });
@@ -115,7 +117,10 @@ describe('ProductController', () => {
 
   describe('create', () => {
     it('should create and return a new product', async () => {
-      mockProductService.create.mockResolvedValue({ ...mockProduct, ...mockCreateProductDto });
+      mockProductService.create.mockResolvedValue({
+        ...mockProduct,
+        ...mockCreateProductDto,
+      });
 
       const result = await controller.create(mockCreateProductDto);
 
@@ -130,10 +135,16 @@ describe('ProductController', () => {
 
       mockProductService.update.mockResolvedValue(updated);
 
-      const result = await controller.update(mockProduct.id, mockUpdateProductDto);
+      const result = await controller.update(
+        mockProduct.id,
+        mockUpdateProductDto,
+      );
 
       expect(result).toEqual(updated);
-      expect(service.update).toHaveBeenCalledWith(mockProduct.id, mockUpdateProductDto);
+      expect(service.update).toHaveBeenCalledWith(
+        mockProduct.id,
+        mockUpdateProductDto,
+      );
     });
 
     it('should update only stock', async () => {

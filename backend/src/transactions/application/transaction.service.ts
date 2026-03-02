@@ -147,7 +147,6 @@ export class TransactionService {
       const { productId, customerId, quantity, baseFee, deliveryFee } =
         createTransactionDto;
 
-      // Validar producto y stock
       const product = await this.productService.findById(productId);
       if (product.stock < quantity) {
         this.logger.warn(
@@ -160,10 +159,8 @@ export class TransactionService {
         );
       }
 
-      // Validar cliente
       const customer = await this.customerService.findById(customerId);
 
-      // Calcular montos
       const unitPrice = Number(product.price);
       const subtotal = unitPrice * quantity;
       const finalBaseFee =
@@ -259,14 +256,15 @@ export class TransactionService {
       );
 
       // Crear transacción en Wompi
-      let wompiTransaction = await this.wompiService.createTransaction({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      let wompiTransaction: any = await this.wompiService.createTransaction({
         amount_in_cents: Math.round(transaction.total * 100), // Convertir a centavos
         currency: 'COP',
         customer_email: transaction.customer.email,
         payment_method: {
           type: 'CARD',
           token: cardToken,
-          installments: paymentDto.installments || 1, // Usar cuotas del DTO o 1 por defecto
+          installments: (paymentDto.installments as number) || 1,
         },
         reference: transaction.id,
         acceptance_token: acceptanceToken,

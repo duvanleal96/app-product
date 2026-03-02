@@ -28,7 +28,7 @@ export const mockCustomer: Customer = {
 };
 
 export const mockProduct: Product = {
-  id: '123e4567-e89b-12d3-a456-426614174222',
+  id: '123e4567-e89b-12d3-a456-426614174222' as string,
   name: 'Test Product',
   description: 'A test product',
   price: 100000,
@@ -52,7 +52,7 @@ export const mockDelivery: Partial<Delivery> = {
   notes: 'Leave at door',
   status: DeliveryStatus.PENDING,
   estimatedDeliveryDate: new Date('2026-01-05'),
-  deliveredAt: null,
+  deliveredAt: new Date('2026-01-01'),
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
 };
@@ -69,10 +69,10 @@ export const mockTransaction: Partial<Transaction> = {
   deliveryFee: 5000,
   total: 207000,
   status: TransactionStatus.PENDING,
-  wompiTransactionId: null,
+  wompiTransactionId: '',
   paymentReference: 'ref123',
-  paymentResponse: null,
-  paidAt: null,
+  paymentResponse: '',
+  paidAt: new Date('2026-01-01'),
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
 };
@@ -87,7 +87,7 @@ export const mockTransactionApproved: Partial<Transaction> = {
 
 export const mockCreateTransactionDto: CreateTransactionDto = {
   customerId: mockCustomer.id,
-  productId: mockProduct.id,
+  productId: mockProduct.id as string,
   quantity: 2,
 };
 
