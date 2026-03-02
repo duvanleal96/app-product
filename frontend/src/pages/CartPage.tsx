@@ -1,7 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { removeFromCart, updateQuantity } from '../store/cartSlice';
-import { applyGradient } from '../theme/colors';
 
 // Fees configuration (same as PaymentPage)
 const BASE_FEE = 5000; // Comisión base: $5,000 COP

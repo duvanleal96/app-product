@@ -8,7 +8,6 @@ import {
   formatCardNumber,
   validateLuhn,
   isCardTypeAccepted,
-  type CardType,
 } from './cardDetection';
 
 describe('cardDetection', () => {
