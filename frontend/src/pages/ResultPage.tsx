@@ -169,17 +169,17 @@ export const ResultPage = () => {
               {showWompiDetails && (
                 <div className="space-y-3">
                   <div className="bg-white rounded-lg p-4 border border-gray-200">
-                    <div className="mb-2"><strong>Estado:</strong> {transaction.wompiDetails.status}</div>
-                    <div className="mb-2"><strong>ID de Transacción:</strong> {transaction.wompiDetails.id}</div>
-                    <div className="mb-2"><strong>Referencia:</strong> {transaction.wompiDetails.reference}</div>
-                    <div className="mb-2"><strong>Monto:</strong> ${(transaction.wompiDetails.amount_in_cents / 100).toLocaleString('es-CO')}</div>
-                    <div className="mb-2"><strong>Moneda:</strong> {transaction.wompiDetails.currency}</div>
-                    <div className="mb-2"><strong>Método de pago:</strong> {transaction.wompiDetails.payment_method?.type}</div>
-                    {transaction.wompiDetails.status_message && (
-                      <div className="mb-2"><strong>Mensaje:</strong> {transaction.wompiDetails.status_message}</div>
+                    <div className="mb-2"><strong>Estado:</strong> {transaction.wompiDetails.status as string}</div>
+                    <div className="mb-2"><strong>ID de Transacción:</strong> {transaction.wompiDetails.id as string}</div>
+                    <div className="mb-2"><strong>Referencia:</strong> {transaction.wompiDetails.reference as string}</div>
+                    <div className="mb-2"><strong>Monto:</strong> ${(transaction.wompiDetails.amount_in_cents as number / 100).toLocaleString('es-CO')}</div>
+                    <div className="mb-2"><strong>Moneda:</strong> {transaction.wompiDetails.currency as string}</div>
+                    <div className="mb-2"><strong>Método de pago:</strong> {(transaction.wompiDetails.payment_method as { type?: string })?.type as string}</div>
+                    {transaction.wompiDetails.status_message as string && (
+                      <div className="mb-2"><strong>Mensaje:</strong> {transaction.wompiDetails.status_message as string}</div>
                     )}
-                    {transaction.wompiDetails.payment_method_type && (
-                      <div className="mb-2"><strong>Tipo de tarjeta:</strong> {transaction.wompiDetails.payment_method_type}</div>
+                    {transaction.wompiDetails.payment_method_type as string && (
+                      <div className="mb-2"><strong>Tipo de tarjeta:</strong> {transaction.wompiDetails.payment_method_type as string}</div>
                     )}
                   </div>
                   

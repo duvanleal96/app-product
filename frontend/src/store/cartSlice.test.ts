@@ -33,8 +33,8 @@ describe('cartSlice', () => {
     category: 'electronics',
     imageUrl: 'test.jpg',
     isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 
   beforeEach(() => {
