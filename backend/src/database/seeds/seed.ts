@@ -26,7 +26,8 @@ const seedProducts = [
     price: 2499000,
     stock: 15,
     category: 'Electrónica',
-    imageUrl: 'https://picsum.photos/seed/laptop1/600/400',
+    imageUrl:
+      'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=600&h=400&fit=crop',
     isActive: true,
   },
   {
@@ -36,7 +37,8 @@ const seedProducts = [
     price: 5499000,
     stock: 8,
     category: 'Electrónica',
-    imageUrl: 'https://picsum.photos/seed/iphone14/600/400',
+    imageUrl:
+      'https://images.unsplash.com/photo-1678652197831-2d180705cd2c?w=600&h=400&fit=crop',
     isActive: true,
   },
   {
@@ -46,7 +48,8 @@ const seedProducts = [
     price: 4799000,
     stock: 12,
     category: 'Electrónica',
-    imageUrl: 'https://picsum.photos/seed/samsung23/600/400',
+    imageUrl:
+      'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=600&h=400&fit=crop',
     isActive: true,
   },
   {
@@ -55,7 +58,8 @@ const seedProducts = [
     price: 899000,
     stock: 25,
     category: 'Audio',
-    imageUrl: 'https://picsum.photos/seed/airpods/600/400',
+    imageUrl:
+      'https://images.unsplash.com/photo-1606841837239-c5a1a4a07af7?w=600&h=400&fit=crop',
     isActive: true,
   },
   {
@@ -65,7 +69,8 @@ const seedProducts = [
     price: 1299000,
     stock: 18,
     category: 'Audio',
-    imageUrl: 'https://picsum.photos/seed/sony-headphones/600/400',
+    imageUrl:
+      'https://images.unsplash.com/photo-1545127398-14699f92334b?w=600&h=400&fit=crop',
     isActive: true,
   },
   {
@@ -75,7 +80,8 @@ const seedProducts = [
     price: 1899000,
     stock: 20,
     category: 'Wearables',
-    imageUrl: 'https://picsum.photos/seed/applewatch/600/400',
+    imageUrl:
+      'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=600&h=400&fit=crop',
     isActive: true,
   },
   {
@@ -84,7 +90,8 @@ const seedProducts = [
     price: 3299000,
     stock: 10,
     category: 'Electrónica',
-    imageUrl: 'https://picsum.photos/seed/ipad-air/600/400',
+    imageUrl:
+      'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600&h=400&fit=crop',
     isActive: true,
   },
   {
@@ -94,7 +101,8 @@ const seedProducts = [
     price: 8999000,
     stock: 5,
     category: 'Electrónica',
-    imageUrl: 'https://picsum.photos/seed/macbook-pro/600/400',
+    imageUrl:
+      'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=600&h=400&fit=crop',
     isActive: true,
   },
   {
@@ -103,7 +111,8 @@ const seedProducts = [
     price: 1499000,
     stock: 30,
     category: 'Gaming',
-    imageUrl: 'https://picsum.photos/seed/nintendo-switch/600/400',
+    imageUrl:
+      'https://images.unsplash.com/photo-1578303512597-81e6cc155b3e?w=600&h=400&fit=crop',
     isActive: true,
   },
   {
@@ -112,7 +121,8 @@ const seedProducts = [
     price: 2799000,
     stock: 7,
     category: 'Gaming',
-    imageUrl: 'https://picsum.photos/seed/ps5-console/600/400',
+    imageUrl:
+      'https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=600&h=400&fit=crop',
     isActive: true,
   },
 ];

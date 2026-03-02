@@ -1,36 +1,36 @@
-// Sistema de diseño centralizado - Colores y gradientes
+// Sistema de diseño centralizado - Paleta Minimalista
 
 export const gradients = {
-  // Gradientes principales para fondos
-  primary: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
-  secondary: 'linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #ffd876 100%)',
-  success: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-  warm: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-  cool: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
+  // Gradientes sutiles para fondos
+  primary: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
+  secondary: 'linear-gradient(135deg, #f5f5f5 0%, #e5e5e5 100%)',
+  success: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+  warm: 'linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%)',
+  cool: 'linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%)',
   
-  // Gradientes suaves para secciones
-  lightPurple: 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
-  lightBlue: 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%)',
-  lightPink: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+  // Gradientes neutros para secciones
+  lightGray: 'linear-gradient(135deg, #fafafa 0%, #ffffff 100%)',
+  lightBlue: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+  lightMint: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
   
-  // Gradiente de fondo general
-  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #ffd876 100%)',
+  // Gradiente de fondo general - minimalista
+  background: 'linear-gradient(180deg, #ffffff 0%, #fafafa 100%)',
   
-  // Gradientes para cards
-  card: 'linear-gradient(135deg, #ffffff 0%, #f8f9ff 50%, #fff5fb 100%)',
-  cardHover: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 50%, #f093fb 100%)',
+  // Gradientes sutiles para cards
+  card: 'linear-gradient(135deg, #ffffff 0%, #fafafa 100%)',
+  cardHover: 'linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%)',
 } as const;
 
 export const colors = {
   primary: {
-    main: '#667eea',
-    light: '#8b9cf6',
-    dark: '#4a5bcc',
+    main: '#1a1a1a',
+    light: '#404040',
+    dark: '#0a0a0a',
   },
   secondary: {
-    main: '#f093fb',
-    light: '#f5b1ff',
-    dark: '#d76ee6',
+    main: '#737373',
+    light: '#a3a3a3',
+    dark: '#525252',
   },
   success: {
     main: '#10b981',
@@ -38,9 +38,9 @@ export const colors = {
     dark: '#059669',
   },
   error: {
-    main: '#ef4444',
-    light: '#f87171',
-    dark: '#dc2626',
+    main: '#dc2626',
+    light: '#ef4444',
+    dark: '#b91c1c',
   },
   warning: {
     main: '#f59e0b',

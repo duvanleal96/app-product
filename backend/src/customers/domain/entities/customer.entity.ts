@@ -7,7 +7,7 @@ export class Customer extends BaseEntity {
   @Column({ length: 100 })
   fullName: string;
 
-  @Column({ length: 150, unique: true })
+  @Column({ length: 150 })
   email: string;
 
   @Column({ length: 20 })
