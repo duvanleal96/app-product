@@ -2,24 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { CustomerRepository } from './customer.repository';
 import { Customer } from '../../domain/entities/customer.entity';
+import { mockCustomer } from '../../test-cases';
 
 describe('CustomerRepository', () => {
   let repository: CustomerRepository;
-
-  const mockCustomer: Customer = {
-    id: '1',
-    fullName: 'John Doe',
-    email: 'john@example.com',
-    phone: '1234567890',
-    address: '123 Main St',
-    city: 'Test City',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    documentType: '',
-    documentNumber: '',
-    country: '',
-    transactions: [],
-  };
 
   const mockTypeormRepository = {
     find: jest.fn(),
@@ -78,11 +64,11 @@ describe('CustomerRepository', () => {
     it('should return a customer when found', async () => {
       mockTypeormRepository.findOne.mockResolvedValue(mockCustomer);
 
-      const result = await repository.findById('1');
+      const result = await repository.findById(mockCustomer.id);
 
       expect(result).toEqual(mockCustomer);
       expect(mockTypeormRepository.findOne).toHaveBeenCalledWith({
-        where: { id: '1' },
+        where: { id: mockCustomer.id },
       });
     });
 
@@ -149,15 +135,15 @@ describe('CustomerRepository', () => {
       mockTypeormRepository.update.mockResolvedValue({ affected: 1 });
       mockTypeormRepository.findOne.mockResolvedValue(updatedCustomer);
 
-      const result = await repository.update('1', updateData);
+      const result = await repository.update(mockCustomer.id, updateData);
 
       expect(result).toEqual(updatedCustomer);
       expect(mockTypeormRepository.update).toHaveBeenCalledWith(
-        '1',
+        mockCustomer.id,
         updateData,
       );
       expect(mockTypeormRepository.findOne).toHaveBeenCalledWith({
-        where: { id: '1' },
+        where: { id: mockCustomer.id },
       });
     });
 
@@ -177,9 +163,9 @@ describe('CustomerRepository', () => {
     it('should delete a customer by id', async () => {
       mockTypeormRepository.delete.mockResolvedValue({ affected: 1 });
 
-      await repository.delete('1');
+      await repository.delete(mockCustomer.id);
 
-      expect(mockTypeormRepository.delete).toHaveBeenCalledWith('1');
+      expect(mockTypeormRepository.delete).toHaveBeenCalledWith(mockCustomer.id);
     });
 
     it('should not throw error when deleting non-existent customer', async () => {

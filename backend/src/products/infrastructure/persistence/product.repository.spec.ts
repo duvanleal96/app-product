@@ -2,20 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ProductRepository } from './product.repository';
 import { Product } from '../../domain/entities/product.entity';
-
-const mockProduct: Product = {
-  id: '123e4567-e89b-12d3-a456-426614174000',
-  name: 'Test Product',
-  description: 'A test product',
-  price: 100000,
-  stock: 10,
-  imageUrl: 'https://example.com/image.jpg',
-  category: 'electronics',
-  isActive: true,
-  transactions: [],
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
+import { mockProduct } from '../../test-cases';
 
 describe('ProductRepository', () => {
   let repository: ProductRepository;

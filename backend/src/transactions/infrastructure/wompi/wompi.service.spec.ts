@@ -13,6 +13,7 @@ jest.mock('../../../config/wompi.config', () => ({
 }));
 
 import { WompiService } from './wompi.service';
+import { mockCardData, mockWompiTransactionData } from '../../test-cases';
 
 const mockFetchResponse = (body: unknown, ok = true, status = 200) =>
   Promise.resolve({
@@ -34,19 +35,11 @@ describe('WompiService', () => {
   });
 
   describe('tokenizeCard', () => {
-    const cardData = {
-      number: '4242424242424242',
-      cvc: '123',
-      exp_month: '12',
-      exp_year: '28',
-      card_holder: 'John Doe',
-    };
-
     it('should return token id on success', async () => {
       const mockResponse = { data: { id: 'tok_test_123', status: 'CREATED' } };
       jest.spyOn(global, 'fetch').mockResolvedValue(mockFetchResponse(mockResponse) as any);
 
-      const result = await service.tokenizeCard(cardData);
+      const result = await service.tokenizeCard(mockCardData);
 
       expect(result).toBe('tok_test_123');
       expect(global.fetch).toHaveBeenCalledWith(
@@ -64,13 +57,13 @@ describe('WompiService', () => {
         mockFetchResponse(errorResponse, false, 400) as any,
       );
 
-      await expect(service.tokenizeCard(cardData)).rejects.toThrow();
+      await expect(service.tokenizeCard(mockCardData)).rejects.toThrow();
     });
 
     it('should throw CustomException on network error', async () => {
       jest.spyOn(global, 'fetch').mockRejectedValue(new Error('Network error'));
 
-      await expect(service.tokenizeCard(cardData)).rejects.toThrow();
+      await expect(service.tokenizeCard(mockCardData)).rejects.toThrow();
     });
   });
 
@@ -109,22 +102,13 @@ describe('WompiService', () => {
   });
 
   describe('createTransaction', () => {
-    const transactionData = {
-      acceptance_token: 'acc_token',
-      amount_in_cents: 207000,
-      currency: 'COP',
-      customer_email: 'john@example.com',
-      reference: 'ref-001',
-      payment_method: { type: 'CARD', installments: 1, token: 'tok_123' },
-    };
-
     it('should create and return transaction on success', async () => {
       const mockResponse = {
         data: { id: 'wompi-txn-001', status: 'PENDING' },
       };
       jest.spyOn(global, 'fetch').mockResolvedValue(mockFetchResponse(mockResponse) as any);
 
-      const result = await service.createTransaction(transactionData);
+      const result = await service.createTransaction(mockWompiTransactionData);
 
       expect(result).toEqual(mockResponse);
       expect(global.fetch).toHaveBeenCalledWith(
@@ -142,13 +126,13 @@ describe('WompiService', () => {
         mockFetchResponse(errorResponse, false, 422) as any,
       );
 
-      await expect(service.createTransaction(transactionData)).rejects.toThrow();
+      await expect(service.createTransaction(mockWompiTransactionData)).rejects.toThrow();
     });
 
     it('should throw CustomException on network error', async () => {
       jest.spyOn(global, 'fetch').mockRejectedValue(new Error('Timeout'));
 
-      await expect(service.createTransaction(transactionData)).rejects.toThrow();
+      await expect(service.createTransaction(mockWompiTransactionData)).rejects.toThrow();
     });
   });
 

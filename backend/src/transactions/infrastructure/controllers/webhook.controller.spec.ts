@@ -4,28 +4,7 @@ import { WebhookController } from './webhook.controller';
 import { TransactionService } from '../../application/transaction.service';
 import { WompiService } from '../wompi/wompi.service';
 import { WebhookEventDto } from '../../application/dto/webhook-event.dto';
-
-const mockWebhookEvent: WebhookEventDto = {
-  event: 'transaction.updated',
-  data: {
-    transaction: {
-      id: 'wompi-123',
-      amount_in_cents: 207000,
-      reference: 'txn-ref-001',
-      customer_email: 'john@example.com',
-      currency: 'COP',
-      payment_method_type: 'CARD',
-      status: 'APPROVED',
-    },
-  },
-  environment: 'test',
-  signature: {
-    properties: ['transaction.id', 'transaction.status'],
-    checksum: 'abc123',
-  },
-  timestamp: 1700000000,
-  sent_at: '2026-03-01T00:00:00.000Z',
-};
+import { mockWebhookEventDto } from '../../test-cases';
 
 describe('WebhookController', () => {
   let controller: WebhookController;
@@ -67,18 +46,18 @@ describe('WebhookController', () => {
       mockWompiService.verifyEventSignature.mockReturnValue(true);
       mockTransactionService.updateTransactionFromWebhook.mockResolvedValue(undefined);
 
-      const result = await controller.handleWompiWebhook(mockWebhookEvent, 'valid-checksum');
+      const result = await controller.handleWompiWebhook(mockWebhookEventDto, 'valid-checksum');
 
       expect(result).toEqual({ received: true });
       expect(wompiService.verifyEventSignature).toHaveBeenCalledWith(
-        mockWebhookEvent,
+        mockWebhookEventDto,
         'valid-checksum',
       );
       expect(transactionService.updateTransactionFromWebhook).toHaveBeenCalledWith(
-        mockWebhookEvent.data.transaction.reference,
-        mockWebhookEvent.data.transaction.status,
-        mockWebhookEvent.data.transaction.id,
-        mockWebhookEvent,
+        mockWebhookEventDto.data.transaction.reference,
+        mockWebhookEventDto.data.transaction.status,
+        mockWebhookEventDto.data.transaction.id,
+        mockWebhookEventDto,
       );
     });
 
@@ -86,7 +65,7 @@ describe('WebhookController', () => {
       mockWompiService.verifyEventSignature.mockReturnValue(false);
 
       await expect(
-        controller.handleWompiWebhook(mockWebhookEvent, 'invalid-checksum'),
+        controller.handleWompiWebhook(mockWebhookEventDto, 'invalid-checksum'),
       ).rejects.toThrow(UnauthorizedException);
 
       expect(transactionService.updateTransactionFromWebhook).not.toHaveBeenCalled();
@@ -96,17 +75,17 @@ describe('WebhookController', () => {
       mockWompiService.verifyEventSignature.mockReturnValue(true);
       mockTransactionService.updateTransactionFromWebhook.mockResolvedValue(undefined);
 
-      const result = await controller.handleWompiWebhook(mockWebhookEvent);
+      const result = await controller.handleWompiWebhook(mockWebhookEventDto);
 
       expect(result).toEqual({ received: true });
       expect(wompiService.verifyEventSignature).toHaveBeenCalledWith(
-        mockWebhookEvent,
+        mockWebhookEventDto,
         undefined,
       );
     });
 
     it('should handle nequi_token.updated event and return received: true', async () => {
-      const nequiEvent = { ...mockWebhookEvent, event: 'nequi_token.updated' };
+      const nequiEvent = { ...mockWebhookEventDto, event: 'nequi_token.updated' };
       mockWompiService.verifyEventSignature.mockReturnValue(true);
 
       const result = await controller.handleWompiWebhook(nequiEvent as WebhookEventDto);
@@ -116,7 +95,7 @@ describe('WebhookController', () => {
     });
 
     it('should handle bancolombia_transfer_token.updated event and return received: true', async () => {
-      const bancolombiaEvent = { ...mockWebhookEvent, event: 'bancolombia_transfer_token.updated' };
+      const bancolombiaEvent = { ...mockWebhookEventDto, event: 'bancolombia_transfer_token.updated' };
       mockWompiService.verifyEventSignature.mockReturnValue(true);
 
       const result = await controller.handleWompiWebhook(bancolombiaEvent as WebhookEventDto);
@@ -126,7 +105,7 @@ describe('WebhookController', () => {
     });
 
     it('should handle unknown event type and return received: true', async () => {
-      const unknownEvent = { ...mockWebhookEvent, event: 'unknown.event' };
+      const unknownEvent = { ...mockWebhookEventDto, event: 'unknown.event' };
       mockWompiService.verifyEventSignature.mockReturnValue(true);
 
       const result = await controller.handleWompiWebhook(unknownEvent as WebhookEventDto);
@@ -140,7 +119,7 @@ describe('WebhookController', () => {
         new Error('Database error'),
       );
 
-      const result = await controller.handleWompiWebhook(mockWebhookEvent, 'valid-checksum');
+      const result = await controller.handleWompiWebhook(mockWebhookEventDto, 'valid-checksum');
 
       expect(result).toEqual({ received: true });
     });

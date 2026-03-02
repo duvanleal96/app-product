@@ -1,23 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProductController } from './product.controller';
 import { ProductService } from '../../application/product.service';
-import { CreateProductDto } from '../../application/dto/create-product.dto';
 import { UpdateProductDto } from '../../application/dto/update-product.dto';
-import { Product } from '../../domain/entities/product.entity';
-
-const mockProduct: Product = {
-  id: '123e4567-e89b-12d3-a456-426614174000',
-  name: 'Test Product',
-  description: 'A test product',
-  price: 100000,
-  stock: 10,
-  imageUrl: 'https://example.com/image.jpg',
-  category: 'electronics',
-  isActive: true,
-  transactions: [],
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
+import {
+  mockProduct,
+  mockCreateProductDto,
+  mockUpdateProductDto,
+} from '../../test-cases';
 
 describe('ProductController', () => {
   let controller: ProductController;
@@ -126,34 +115,25 @@ describe('ProductController', () => {
 
   describe('create', () => {
     it('should create and return a new product', async () => {
-      const createDto: CreateProductDto = {
-        name: 'New Product',
-        description: 'Description',
-        price: 50000,
-        stock: 5,
-        category: 'electronics',
-      };
+      mockProductService.create.mockResolvedValue({ ...mockProduct, ...mockCreateProductDto });
 
-      mockProductService.create.mockResolvedValue({ ...mockProduct, ...createDto });
+      const result = await controller.create(mockCreateProductDto);
 
-      const result = await controller.create(createDto);
-
-      expect(result.name).toBe(createDto.name);
-      expect(service.create).toHaveBeenCalledWith(createDto);
+      expect(result.name).toBe(mockCreateProductDto.name);
+      expect(service.create).toHaveBeenCalledWith(mockCreateProductDto);
     });
   });
 
   describe('update', () => {
     it('should update and return the product', async () => {
-      const updateDto: UpdateProductDto = { name: 'Updated Product', price: 90000 };
-      const updated = { ...mockProduct, ...updateDto };
+      const updated = { ...mockProduct, ...mockUpdateProductDto };
 
       mockProductService.update.mockResolvedValue(updated);
 
-      const result = await controller.update(mockProduct.id, updateDto);
+      const result = await controller.update(mockProduct.id, mockUpdateProductDto);
 
       expect(result).toEqual(updated);
-      expect(service.update).toHaveBeenCalledWith(mockProduct.id, updateDto);
+      expect(service.update).toHaveBeenCalledWith(mockProduct.id, mockUpdateProductDto);
     });
 
     it('should update only stock', async () => {
