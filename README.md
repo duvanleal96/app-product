@@ -448,40 +448,6 @@ All files                 |   79.63 |    62.30 |   96.06 |   78.61 |
 - **Conexión SSL**: Habilitada (rejectUnauthorized: false)
 - **Puerto**: 5432
 
-### Configuración de Variables de Entorno
-
-**Backend (.env en EC2):**
-```bash
-# Database RDS
-DB_HOST=database-1.cbs2okuoypyd.us-east-2.rds.amazonaws.com
-DB_PORT=5432
-DB_USERNAME=postgres
-DB_PASSWORD=ecommerce-dev
-DB_NAME=postgres
-
-# Payment Gateway (Wompi Sandbox)
-WOMPI_API_URL=https://api-sandbox.co.uat.wompi.dev/v1
-WOMPI_PUBLIC_KEY=pub_stagtest_***
-WOMPI_PRIVATE_KEY=prv_stagtest_***
-WOMPI_EVENTS_KEY=stagtest_events_***
-WOMPI_INTEGRITY_KEY=stagtest_integrity_***
-
-# Application
-NODE_ENV=development
-PORT=3000
-CORS_ORIGIN=http://frontend-app-product.s3-website.us-east-2.amazonaws.com
-BASE_FEE=2000
-DELIVERY_FEE=5000
-```
-
-**Frontend (.env.production):**
-```bash
-VITE_API_URL=http://13.58.145.75:3000/api
-VITE_APP_NAME=E-commerce App
-VITE_APP_VERSION=1.0.0
-VITE_ENV=production
-```
-
 ### Pasos de Deploy Ejecutados
 
 #### **1. Setup Inicial EC2**

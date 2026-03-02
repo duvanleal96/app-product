@@ -89,6 +89,9 @@ export const CartPage = () => {
                   <p className="text-gray-600 mt-1 line-clamp-2">
                     {item.product.description}
                   </p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Stock disponible: <span className="font-semibold">{item.product.stock}</span>
+                  </p>
                   
                   <div className="mt-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -106,8 +109,10 @@ export const CartPage = () => {
                         </span>
                         <button
                           onClick={() => handleUpdateQuantity(item.product.id, item.quantity + 1)}
-                          className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-blue-600 font-bold text-xl rounded-full hover:bg-white transition-all"
+                          disabled={item.quantity >= item.product.stock}
+                          className="w-8 h-8 flex items-center justify-center text-gray-600 hover:text-blue-600 font-bold text-xl rounded-full hover:bg-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-gray-600 disabled:hover:bg-transparent"
                           aria-label="Aumentar cantidad"
+                          title={item.quantity >= item.product.stock ? 'Stock máximo alcanzado' : 'Aumentar cantidad'}
                         >
                           +
                         </button>

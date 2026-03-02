@@ -54,9 +54,12 @@ const cartSlice = createSlice({
       const existingItem = state.items.find((item) => item.product.id === product.id);
 
       if (existingItem) {
-        existingItem.quantity += quantity;
+        // No permitir exceder el stock disponible
+        const newQuantity = existingItem.quantity + quantity;
+        existingItem.quantity = Math.min(newQuantity, product.stock);
       } else {
-        state.items.push({ product, quantity });
+        // Al agregar nuevo item, limitar a stock disponible
+        state.items.push({ product, quantity: Math.min(quantity, product.stock) });
       }
 
       state.total = calculateTotal(state.items);
@@ -70,7 +73,8 @@ const cartSlice = createSlice({
       const item = state.items.find((item) => item.product.id === productId);
 
       if (item && quantity > 0) {
-        item.quantity = quantity;
+        // No permitir exceder el stock disponible
+        item.quantity = Math.min(quantity, item.product.stock);
         state.total = calculateTotal(state.items);
         saveCartToStorage(state); // Persist to localStorage
       }
