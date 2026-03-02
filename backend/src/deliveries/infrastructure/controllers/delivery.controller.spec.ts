@@ -116,7 +116,10 @@ describe('DeliveryController', () => {
       const updatedDelivery = { ...mockDelivery, ...mockUpdateDeliveryDto };
       mockDeliveryService.update.mockResolvedValue(updatedDelivery);
 
-      const result = await controller.update(mockDelivery.id, mockUpdateDeliveryDto);
+      const result = await controller.update(
+        mockDelivery.id,
+        mockUpdateDeliveryDto,
+      );
 
       expect(result).toEqual(updatedDelivery);
       expect(mockDeliveryService.update).toHaveBeenCalledWith(
@@ -127,7 +130,11 @@ describe('DeliveryController', () => {
 
     it('should update only the status', async () => {
       const updateDto: UpdateDeliveryDto = { status: DeliveryStatus.DELIVERED };
-      const updatedDelivery = { ...mockDelivery, status: DeliveryStatus.DELIVERED, deliveredAt: new Date() };
+      const updatedDelivery = {
+        ...mockDelivery,
+        status: DeliveryStatus.DELIVERED,
+        deliveredAt: new Date(),
+      };
 
       mockDeliveryService.update.mockResolvedValue(updatedDelivery);
 

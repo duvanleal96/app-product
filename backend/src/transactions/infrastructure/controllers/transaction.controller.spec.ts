@@ -8,10 +8,10 @@ import {
   mockCreateTransactionDto,
   mockProcessPaymentDto,
 } from '../../test-cases';
+import { ProcessPaymentDto } from 'src/transactions/application/dto/process-payment.dto';
 
 describe('TransactionController', () => {
   let controller: TransactionController;
-  let service: TransactionService;
 
   const mockTransactionService = {
     findAll: jest.fn(),
@@ -36,7 +36,6 @@ describe('TransactionController', () => {
     }).compile();
 
     controller = module.get<TransactionController>(TransactionController);
-    service = module.get<TransactionService>(TransactionService);
   });
 
   afterEach(() => {
@@ -54,8 +53,8 @@ describe('TransactionController', () => {
       const result = await controller.findAll();
 
       expect(result).toEqual([mockTransaction]);
-      expect(service.findAll).toHaveBeenCalledTimes(1);
-      expect(service.findByStatus).not.toHaveBeenCalled();
+      expect(mockTransactionService.findAll).toHaveBeenCalledTimes(1);
+      expect(mockTransactionService.findByStatus).not.toHaveBeenCalled();
     });
 
     it('should return transactions filtered by status when status is provided', async () => {
@@ -64,8 +63,10 @@ describe('TransactionController', () => {
       const result = await controller.findAll('PENDING');
 
       expect(result).toEqual([mockTransaction]);
-      expect(service.findByStatus).toHaveBeenCalledWith('PENDING');
-      expect(service.findAll).not.toHaveBeenCalled();
+      expect(mockTransactionService.findByStatus).toHaveBeenCalledWith(
+        'PENDING',
+      );
+      expect(mockTransactionService.findAll).not.toHaveBeenCalled();
     });
 
     it('should return empty array when no transactions exist', async () => {
@@ -80,18 +81,24 @@ describe('TransactionController', () => {
   describe('findByCustomer', () => {
     it('should return transactions for a specific customer', async () => {
       const customerId = '123e4567-e89b-12d3-a456-426614174111';
-      mockTransactionService.findByCustomerId.mockResolvedValue([mockTransaction]);
+      mockTransactionService.findByCustomerId.mockResolvedValue([
+        mockTransaction,
+      ]);
 
       const result = await controller.findByCustomer(customerId);
 
       expect(result).toEqual([mockTransaction]);
-      expect(service.findByCustomerId).toHaveBeenCalledWith(customerId);
+      expect(mockTransactionService.findByCustomerId).toHaveBeenCalledWith(
+        customerId,
+      );
     });
 
     it('should return empty array when customer has no transactions', async () => {
       mockTransactionService.findByCustomerId.mockResolvedValue([]);
 
-      const result = await controller.findByCustomer('123e4567-e89b-12d3-a456-426614174222');
+      const result = await controller.findByCustomer(
+        '123e4567-e89b-12d3-a456-426614174222',
+      );
 
       expect(result).toEqual([]);
     });
@@ -101,10 +108,12 @@ describe('TransactionController', () => {
     it('should return a transaction by id', async () => {
       mockTransactionService.findById.mockResolvedValue(mockTransaction);
 
-      const result = await controller.findOne(mockTransaction.id);
+      const result = await controller.findOne(mockTransaction.id as string);
 
       expect(result).toEqual(mockTransaction);
-      expect(service.findById).toHaveBeenCalledWith(mockTransaction.id);
+      expect(mockTransactionService.findById).toHaveBeenCalledWith(
+        mockTransaction.id,
+      );
     });
   });
 
@@ -115,25 +124,41 @@ describe('TransactionController', () => {
       const result = await controller.create(mockCreateTransactionDto);
 
       expect(result).toEqual(mockTransaction);
-      expect(service.create).toHaveBeenCalledWith(mockCreateTransactionDto);
+      expect(mockTransactionService.create).toHaveBeenCalledWith(
+        mockCreateTransactionDto,
+      );
     });
   });
 
   describe('processPayment', () => {
     it('should process payment and return transaction with parsed wompiDetails', async () => {
-      mockTransactionService.processPayment.mockResolvedValue(mockTransactionApproved);
+      mockTransactionService.processPayment.mockResolvedValue(
+        mockTransactionApproved,
+      );
 
-      const result = await controller.processPayment(mockTransaction.id, mockProcessPaymentDto);
+      const result = await controller.processPayment(
+        mockTransaction.id as string,
+        mockProcessPaymentDto,
+      );
 
       expect(result.status).toBe(TransactionStatus.APPROVED);
-      expect(result.wompiDetails).toEqual({ id: 'wompi-123', status: 'APPROVED' });
-      expect(service.processPayment).toHaveBeenCalledWith(mockTransaction.id, mockProcessPaymentDto);
+      expect(result.wompiDetails).toEqual({
+        id: 'wompi-123',
+        status: 'APPROVED',
+      });
+      expect(mockTransactionService.processPayment).toHaveBeenCalledWith(
+        mockTransaction.id,
+        mockProcessPaymentDto,
+      );
     });
 
     it('should return wompiDetails as null when paymentResponse is null', async () => {
       mockTransactionService.processPayment.mockResolvedValue(mockTransaction);
 
-      const result = await controller.processPayment(mockTransaction.id, {} as ProcessPaymentDto);
+      const result = await controller.processPayment(
+        mockTransaction.id as string,
+        {} as ProcessPaymentDto,
+      );
 
       expect(result.wompiDetails).toBeNull();
     });
@@ -142,7 +167,10 @@ describe('TransactionController', () => {
       const txWithBadJson = { ...mockTransaction, paymentResponse: 'not-json' };
       mockTransactionService.processPayment.mockResolvedValue(txWithBadJson);
 
-      const result = await controller.processPayment(mockTransaction.id, {} as ProcessPaymentDto);
+      const result = await controller.processPayment(
+        mockTransaction.id as string,
+        {} as ProcessPaymentDto,
+      );
 
       expect(result.wompiDetails).toBeNull();
     });
@@ -150,19 +178,32 @@ describe('TransactionController', () => {
 
   describe('syncPaymentStatus', () => {
     it('should sync and return transaction with parsed wompiDetails', async () => {
-      mockTransactionService.syncPaymentStatus.mockResolvedValue(mockTransactionApproved);
+      mockTransactionService.syncPaymentStatus.mockResolvedValue(
+        mockTransactionApproved,
+      );
 
-      const result = await controller.syncPaymentStatus(mockTransaction.id);
+      const result = await controller.syncPaymentStatus(
+        mockTransaction.id as string,
+      );
 
       expect(result.status).toBe(TransactionStatus.APPROVED);
-      expect(result.wompiDetails).toEqual({ id: 'wompi-123', status: 'APPROVED' });
-      expect(service.syncPaymentStatus).toHaveBeenCalledWith(mockTransaction.id);
+      expect(result.wompiDetails).toEqual({
+        id: 'wompi-123',
+        status: 'APPROVED',
+      });
+      expect(mockTransactionService.syncPaymentStatus).toHaveBeenCalledWith(
+        mockTransaction.id,
+      );
     });
 
     it('should return wompiDetails as null when paymentResponse is null', async () => {
-      mockTransactionService.syncPaymentStatus.mockResolvedValue(mockTransaction);
+      mockTransactionService.syncPaymentStatus.mockResolvedValue(
+        mockTransaction,
+      );
 
-      const result = await controller.syncPaymentStatus(mockTransaction.id);
+      const result = await controller.syncPaymentStatus(
+        mockTransaction.id as string,
+      );
 
       expect(result.wompiDetails).toBeNull();
     });
@@ -172,10 +213,12 @@ describe('TransactionController', () => {
     it('should delete a transaction and return success message', async () => {
       mockTransactionService.delete.mockResolvedValue(undefined);
 
-      const result = await controller.delete(mockTransaction.id);
+      const result = await controller.delete(mockTransaction.id as string);
 
       expect(result).toEqual({ message: 'Transaction deleted successfully' });
-      expect(service.delete).toHaveBeenCalledWith(mockTransaction.id);
+      expect(mockTransactionService.delete).toHaveBeenCalledWith(
+        mockTransaction.id as string,
+      );
     });
   });
 });

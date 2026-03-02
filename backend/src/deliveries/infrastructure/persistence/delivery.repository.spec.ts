@@ -1,7 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DeliveryRepository } from './delivery.repository';
-import { Delivery, DeliveryStatus } from '../../domain/entities/delivery.entity';
+import {
+  Delivery,
+  DeliveryStatus,
+} from '../../domain/entities/delivery.entity';
 import { mockDelivery } from '../../test-cases';
 
 describe('DeliveryRepository', () => {
@@ -186,7 +189,9 @@ describe('DeliveryRepository', () => {
 
       await repository.delete(mockDelivery.id);
 
-      expect(mockTypeormRepository.delete).toHaveBeenCalledWith(mockDelivery.id);
+      expect(mockTypeormRepository.delete).toHaveBeenCalledWith(
+        mockDelivery.id,
+      );
     });
 
     it('should not throw when deleting non-existent delivery', async () => {

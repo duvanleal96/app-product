@@ -108,7 +108,10 @@ describe('DeliveryService', () => {
     it('should create a new delivery with default estimated date', async () => {
       mockRepository.create.mockResolvedValue(mockDelivery);
 
-      const result = await service.create(mockTransaction, mockCreateDeliveryDto);
+      const result = await service.create(
+        mockTransaction,
+        mockCreateDeliveryDto,
+      );
 
       expect(result).toEqual(mockDelivery);
       expect(mockRepository.create).toHaveBeenCalledWith(
@@ -194,12 +197,18 @@ describe('DeliveryService', () => {
 
   describe('updateStatus', () => {
     it('should update delivery status', async () => {
-      const updatedDelivery = { ...mockDelivery, status: DeliveryStatus.DELIVERED };
+      const updatedDelivery = {
+        ...mockDelivery,
+        status: DeliveryStatus.DELIVERED,
+      };
 
       mockRepository.findById.mockResolvedValue(mockDelivery);
       mockRepository.update.mockResolvedValue(updatedDelivery);
 
-      const result = await service.updateStatus(mockDelivery.id, DeliveryStatus.DELIVERED);
+      const result = await service.updateStatus(
+        mockDelivery.id,
+        DeliveryStatus.DELIVERED,
+      );
 
       expect(result.status).toBe(DeliveryStatus.DELIVERED);
     });

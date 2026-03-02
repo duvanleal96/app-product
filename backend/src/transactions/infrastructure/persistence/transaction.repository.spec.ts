@@ -69,7 +69,7 @@ describe('TransactionRepository', () => {
     it('should return a transaction with relations when found', async () => {
       mockTypeormRepository.findOne.mockResolvedValue(mockTransaction);
 
-      const result = await repository.findById(mockTransaction.id);
+      const result = await repository.findById(mockTransaction.id as string);
 
       expect(result).toEqual(mockTransaction);
       expect(mockTypeormRepository.findOne).toHaveBeenCalledWith({
@@ -150,13 +150,18 @@ describe('TransactionRepository', () => {
 
   describe('update', () => {
     it('should update and return the transaction', async () => {
-      const updateData: Partial<Transaction> = { status: TransactionStatus.APPROVED };
+      const updateData: Partial<Transaction> = {
+        status: TransactionStatus.APPROVED,
+      };
       const updated = { ...mockTransaction, ...updateData };
 
       mockTypeormRepository.update.mockResolvedValue({ affected: 1 });
       mockTypeormRepository.findOne.mockResolvedValue(updated);
 
-      const result = await repository.update(mockTransaction.id, updateData);
+      const result = await repository.update(
+        mockTransaction.id as string,
+        updateData,
+      );
 
       expect(result).toEqual(updated);
       expect(mockTypeormRepository.update).toHaveBeenCalledWith(
@@ -179,9 +184,11 @@ describe('TransactionRepository', () => {
     it('should delete a transaction by id', async () => {
       mockTypeormRepository.delete.mockResolvedValue({ affected: 1 });
 
-      await repository.delete(mockTransaction.id);
+      await repository.delete(mockTransaction.id as string);
 
-      expect(mockTypeormRepository.delete).toHaveBeenCalledWith(mockTransaction.id);
+      expect(mockTypeormRepository.delete).toHaveBeenCalledWith(
+        mockTransaction.id,
+      );
     });
 
     it('should not throw when deleting non-existent transaction', async () => {

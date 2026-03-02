@@ -165,7 +165,9 @@ describe('CustomerRepository', () => {
 
       await repository.delete(mockCustomer.id);
 
-      expect(mockTypeormRepository.delete).toHaveBeenCalledWith(mockCustomer.id);
+      expect(mockTypeormRepository.delete).toHaveBeenCalledWith(
+        mockCustomer.id,
+      );
     });
 
     it('should not throw error when deleting non-existent customer', async () => {

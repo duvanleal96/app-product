@@ -11,10 +11,15 @@ import {
 import { TransactionService } from '../../application/transaction.service';
 import { CreateTransactionDto } from '../../application/dto/create-transaction.dto';
 import { ProcessPaymentDto } from '../../application/dto/process-payment.dto';
+import { LoggerService } from '../../../shared/infrastructure/logger/logger.service';
 
 @Controller('api/transactions')
 export class TransactionController {
-  constructor(private readonly transactionService: TransactionService) {}
+  private readonly logger: LoggerService;
+
+  constructor(private readonly transactionService: TransactionService) {
+    this.logger = new LoggerService();
+  }
 
   @Get()
   async findAll(@Query('status') status?: string) {
@@ -49,13 +54,16 @@ export class TransactionController {
       processPaymentDto,
     );
 
-    // Parsear paymentResponse para incluirlo en la respuesta
     let wompiResponse = null;
     if (transaction.paymentResponse) {
       try {
         wompiResponse = JSON.parse(transaction.paymentResponse);
       } catch (e) {
-        // Si no se puede parsear, dejar como null
+        this.logger.error(
+          'Failed to parse paymentResponse in processPayment',
+          e instanceof Error ? e.message : String(e),
+          'TransactionController',
+        );
       }
     }
 
@@ -69,13 +77,16 @@ export class TransactionController {
   async syncPaymentStatus(@Param('id', ParseUUIDPipe) id: string) {
     const transaction = await this.transactionService.syncPaymentStatus(id);
 
-    // Parsear paymentResponse para incluirlo en la respuesta
     let wompiResponse = null;
     if (transaction.paymentResponse) {
       try {
         wompiResponse = JSON.parse(transaction.paymentResponse);
       } catch (e) {
-        // Si no se puede parsear, dejar como null
+        this.logger.error(
+          'Failed to parse paymentResponse in syncPaymentStatus',
+          e instanceof Error ? e.message : String(e),
+          'TransactionController',
+        );
       }
     }
 

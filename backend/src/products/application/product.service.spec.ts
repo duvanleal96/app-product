@@ -97,7 +97,10 @@ describe('ProductService', () => {
 
   describe('create', () => {
     it('should create a new product', async () => {
-      mockRepository.create.mockResolvedValue({ ...mockProduct, ...mockCreateProductDto });
+      mockRepository.create.mockResolvedValue({
+        ...mockProduct,
+        ...mockCreateProductDto,
+      });
 
       const result = await service.create(mockCreateProductDto);
 
@@ -116,7 +119,10 @@ describe('ProductService', () => {
       const result = await service.update(mockProduct.id, mockUpdateProductDto);
 
       expect(result.name).toBe(mockUpdateProductDto.name);
-      expect(mockRepository.update).toHaveBeenCalledWith(mockProduct.id, mockUpdateProductDto);
+      expect(mockRepository.update).toHaveBeenCalledWith(
+        mockProduct.id,
+        mockUpdateProductDto,
+      );
     });
 
     it('should throw NotFoundException when updating non-existent product', async () => {
@@ -149,12 +155,18 @@ describe('ProductService', () => {
     it('should reduce product stock', async () => {
       const productWithStock = { ...mockProduct, stock: 10 };
       mockRepository.findById.mockResolvedValue(productWithStock);
-      mockRepository.updateStock.mockResolvedValue({ ...productWithStock, stock: 7 });
+      mockRepository.updateStock.mockResolvedValue({
+        ...productWithStock,
+        stock: 7,
+      });
 
       const result = await service.reduceStock(mockProduct.id, 3);
 
       expect(result.stock).toBe(7);
-      expect(mockRepository.updateStock).toHaveBeenCalledWith(mockProduct.id, 7);
+      expect(mockRepository.updateStock).toHaveBeenCalledWith(
+        mockProduct.id,
+        7,
+      );
     });
 
     it('should throw error when insufficient stock', async () => {
