@@ -156,4 +156,46 @@ describe('cartSlice', () => {
 
     expect(state.total).toBe(350000); // (100000 * 2) + (50000 * 3)
   });
+
+  it('should not exceed stock when adding to existing product', () => {
+    const initialState = {
+      items: [{ product: mockProduct, quantity: 8 }],
+      total: 800000,
+    };
+    const state = cartReducer(
+      initialState,
+      addToCart({ product: mockProduct, quantity: 5 })
+    );
+
+    // Stock is 10, so quantity should be limited to 10, not 8 + 5 = 13
+    expect(state.items[0].quantity).toBe(10);
+    expect(state.total).toBe(1000000);
+  });
+
+  it('should not exceed stock when adding new product', () => {
+    const initialState = { items: [], total: 0 };
+    const state = cartReducer(
+      initialState,
+      addToCart({ product: mockProduct, quantity: 15 })
+    );
+
+    // Stock is 10, so quantity should be limited to 10, not 15
+    expect(state.items[0].quantity).toBe(10);
+    expect(state.total).toBe(1000000);
+  });
+
+  it('should not exceed stock when updating quantity', () => {
+    const initialState = {
+      items: [{ product: mockProduct, quantity: 5 }],
+      total: 500000,
+    };
+    const state = cartReducer(
+      initialState,
+      updateQuantity({ productId: '1', quantity: 20 })
+    );
+
+    // Stock is 10, so quantity should be limited to 10, not 20
+    expect(state.items[0].quantity).toBe(10);
+    expect(state.total).toBe(1000000);
+  });
 });
