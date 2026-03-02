@@ -2,86 +2,16 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { DeliveryService } from './delivery.service';
 import { DELIVERY_REPOSITORY } from '../domain/repositories/delivery.repository.interface';
-import { Delivery, DeliveryStatus } from '../domain/entities/delivery.entity';
-import { CreateDeliveryDto } from './dto/create-delivery.dto';
+import { DeliveryStatus } from '../domain/entities/delivery.entity';
 import {
-  Transaction,
-  TransactionStatus,
-} from '../../transactions/domain/entities/transaction.entity';
+  mockTransaction,
+  mockDelivery,
+  mockCreateDeliveryDto,
+} from '../test-cases';
 
 describe('DeliveryService', () => {
   let service: DeliveryService;
   let mockRepository: any;
-
-  const mockTransaction: Transaction = {
-    id: 'txn1',
-    customer: {
-      id: 'cust1',
-      fullName: 'John Doe',
-      email: 'john@example.com',
-      phone: '1234567890',
-      documentType: 'CC',
-      documentNumber: '123456789',
-      address: '123 Main St',
-      city: 'Test City',
-      country: 'Colombia',
-      transactions: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    product: {
-      id: 'prod1',
-      name: 'Test Product',
-      description: 'Test',
-      price: 100000,
-      stock: 10,
-      imageUrl: 'test.jpg',
-      category: 'electronics',
-      isActive: true,
-      transactions: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    quantity: 1,
-    unitPrice: 100000,
-    subtotal: 100000,
-    baseFee: 2000,
-    deliveryFee: 5000,
-    total: 107000,
-    status: TransactionStatus.APPROVED,
-    wompiTransactionId: '',
-    paymentReference: 'ref123',
-    paymentResponse: '{"status":"APPROVED"}',
-    paidAt: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  const mockDelivery: Delivery = {
-    id: '1',
-    transaction: mockTransaction,
-    fullName: 'John Doe',
-    phone: '1234567890',
-    address: '123 Main St',
-    city: 'Test City',
-    department: 'Test Dept',
-    postalCode: '12345',
-    notes: 'Leave at door',
-    status: DeliveryStatus.PENDING,
-    estimatedDeliveryDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
-    deliveredAt: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  const mockCreateDto: CreateDeliveryDto = {
-    fullName: 'John Doe',
-    phone: '1234567890',
-    address: '123 Main St',
-    city: 'Test City',
-    department: 'Test Dept',
-    notes: 'Leave at door',
-  };
 
   beforeEach(async () => {
     mockRepository = {
@@ -127,10 +57,10 @@ describe('DeliveryService', () => {
     it('should return a delivery when found', async () => {
       mockRepository.findById.mockResolvedValue(mockDelivery);
 
-      const result = await service.findById('1');
+      const result = await service.findById(mockDelivery.id);
 
       expect(result).toEqual(mockDelivery);
-      expect(mockRepository.findById).toHaveBeenCalledWith('1');
+      expect(mockRepository.findById).toHaveBeenCalledWith(mockDelivery.id);
     });
 
     it('should throw NotFoundException when delivery not found', async () => {
@@ -178,15 +108,15 @@ describe('DeliveryService', () => {
     it('should create a new delivery with default estimated date', async () => {
       mockRepository.create.mockResolvedValue(mockDelivery);
 
-      const result = await service.create(mockTransaction, mockCreateDto);
+      const result = await service.create(mockTransaction, mockCreateDeliveryDto);
 
       expect(result).toEqual(mockDelivery);
       expect(mockRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           transaction: mockTransaction,
-          fullName: mockCreateDto.fullName,
-          address: mockCreateDto.address,
-          city: mockCreateDto.city,
+          fullName: mockCreateDeliveryDto.fullName,
+          address: mockCreateDeliveryDto.address,
+          city: mockCreateDeliveryDto.city,
           status: DeliveryStatus.PENDING,
           estimatedDeliveryDate: expect.any(Date),
         }),
@@ -195,8 +125,8 @@ describe('DeliveryService', () => {
 
     it('should create a delivery with custom estimated date', async () => {
       const customDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-      const dtoWithDate: CreateDeliveryDto = {
-        ...mockCreateDto,
+      const dtoWithDate = {
+        ...mockCreateDeliveryDto,
         estimatedDeliveryDate: customDate.toISOString(),
       };
 
@@ -223,11 +153,11 @@ describe('DeliveryService', () => {
       mockRepository.findById.mockResolvedValue(mockDelivery);
       mockRepository.update.mockResolvedValue(updatedDelivery);
 
-      const result = await service.update('1', updateDto);
+      const result = await service.update(mockDelivery.id, updateDto);
 
       expect(result.status).toBe(DeliveryStatus.IN_TRANSIT);
       expect(mockRepository.update).toHaveBeenCalledWith(
-        '1',
+        mockDelivery.id,
         expect.any(Object),
       );
     });
@@ -242,10 +172,10 @@ describe('DeliveryService', () => {
         deliveredAt: new Date(),
       });
 
-      await service.update('1', updateDto);
+      await service.update(mockDelivery.id, updateDto);
 
       expect(mockRepository.update).toHaveBeenCalledWith(
-        '1',
+        mockDelivery.id,
         expect.objectContaining({
           status: DeliveryStatus.DELIVERED,
           deliveredAt: expect.any(Date),
@@ -264,15 +194,12 @@ describe('DeliveryService', () => {
 
   describe('updateStatus', () => {
     it('should update delivery status', async () => {
-      const updatedDelivery = {
-        ...mockDelivery,
-        status: DeliveryStatus.DELIVERED,
-      };
+      const updatedDelivery = { ...mockDelivery, status: DeliveryStatus.DELIVERED };
 
       mockRepository.findById.mockResolvedValue(mockDelivery);
       mockRepository.update.mockResolvedValue(updatedDelivery);
 
-      const result = await service.updateStatus('1', DeliveryStatus.DELIVERED);
+      const result = await service.updateStatus(mockDelivery.id, DeliveryStatus.DELIVERED);
 
       expect(result.status).toBe(DeliveryStatus.DELIVERED);
     });
@@ -283,9 +210,9 @@ describe('DeliveryService', () => {
       mockRepository.findById.mockResolvedValue(mockDelivery);
       mockRepository.delete.mockResolvedValue(undefined);
 
-      await service.delete('1');
+      await service.delete(mockDelivery.id);
 
-      expect(mockRepository.delete).toHaveBeenCalledWith('1');
+      expect(mockRepository.delete).toHaveBeenCalledWith(mockDelivery.id);
     });
 
     it('should throw NotFoundException when deleting non-existent delivery', async () => {

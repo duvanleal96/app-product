@@ -1,34 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TransactionController } from './transaction.controller';
 import { TransactionService } from '../../application/transaction.service';
-import { CreateTransactionDto } from '../../application/dto/create-transaction.dto';
-import { ProcessPaymentDto } from '../../application/dto/process-payment.dto';
+import { TransactionStatus } from '../../domain/entities/transaction.entity';
 import {
-  Transaction,
-  TransactionStatus,
-} from '../../domain/entities/transaction.entity';
-
-const mockTransaction: Partial<Transaction> = {
-  id: '123e4567-e89b-12d3-a456-426614174000',
-  quantity: 2,
-  unitPrice: 100000,
-  subtotal: 200000,
-  baseFee: 2000,
-  deliveryFee: 5000,
-  total: 207000,
-  status: TransactionStatus.PENDING,
-  paymentReference: 'ref123',
-  paymentResponse: null,
-  wompiTransactionId: null,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
-
-const mockTransactionWithPayment: Partial<Transaction> = {
-  ...mockTransaction,
-  status: TransactionStatus.APPROVED,
-  paymentResponse: JSON.stringify({ id: 'wompi-123', status: 'APPROVED' }),
-};
+  mockTransaction,
+  mockTransactionApproved,
+  mockCreateTransactionDto,
+  mockProcessPaymentDto,
+} from '../../test-cases';
 
 describe('TransactionController', () => {
   let controller: TransactionController;
@@ -131,39 +110,24 @@ describe('TransactionController', () => {
 
   describe('create', () => {
     it('should create and return a new transaction', async () => {
-      const createDto: CreateTransactionDto = {
-        customerId: '123e4567-e89b-12d3-a456-426614174111',
-        productId: '123e4567-e89b-12d3-a456-426614174222',
-        quantity: 2,
-      };
-
       mockTransactionService.create.mockResolvedValue(mockTransaction);
 
-      const result = await controller.create(createDto);
+      const result = await controller.create(mockCreateTransactionDto);
 
       expect(result).toEqual(mockTransaction);
-      expect(service.create).toHaveBeenCalledWith(createDto);
+      expect(service.create).toHaveBeenCalledWith(mockCreateTransactionDto);
     });
   });
 
   describe('processPayment', () => {
     it('should process payment and return transaction with parsed wompiDetails', async () => {
-      const processDto: ProcessPaymentDto = {
-        cardNumber: '4242424242424242',
-        cardExpMonth: '12',
-        cardExpYear: '28',
-        cardCvc: '123',
-        cardHolder: 'John Doe',
-        installments: 1,
-      };
+      mockTransactionService.processPayment.mockResolvedValue(mockTransactionApproved);
 
-      mockTransactionService.processPayment.mockResolvedValue(mockTransactionWithPayment);
-
-      const result = await controller.processPayment(mockTransaction.id, processDto);
+      const result = await controller.processPayment(mockTransaction.id, mockProcessPaymentDto);
 
       expect(result.status).toBe(TransactionStatus.APPROVED);
       expect(result.wompiDetails).toEqual({ id: 'wompi-123', status: 'APPROVED' });
-      expect(service.processPayment).toHaveBeenCalledWith(mockTransaction.id, processDto);
+      expect(service.processPayment).toHaveBeenCalledWith(mockTransaction.id, mockProcessPaymentDto);
     });
 
     it('should return wompiDetails as null when paymentResponse is null', async () => {
@@ -186,7 +150,7 @@ describe('TransactionController', () => {
 
   describe('syncPaymentStatus', () => {
     it('should sync and return transaction with parsed wompiDetails', async () => {
-      mockTransactionService.syncPaymentStatus.mockResolvedValue(mockTransactionWithPayment);
+      mockTransactionService.syncPaymentStatus.mockResolvedValue(mockTransactionApproved);
 
       const result = await controller.syncPaymentStatus(mockTransaction.id);
 

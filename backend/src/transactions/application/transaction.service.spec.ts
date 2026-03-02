@@ -5,10 +5,11 @@ import { TRANSACTION_REPOSITORY } from '../domain/repositories/transaction.repos
 import { ProductService } from '../../products/application/product.service';
 import { CustomerService } from '../../customers/application/customer.service';
 import { WompiService } from '../infrastructure/wompi/wompi.service';
+import { TransactionStatus } from '../domain/entities/transaction.entity';
 import {
-  Transaction,
-  TransactionStatus,
-} from '../domain/entities/transaction.entity';
+  mockTransaction,
+  mockCreateTransactionDto,
+} from '../test-cases';
 
 describe('TransactionService', () => {
   let service: TransactionService;
@@ -17,50 +18,6 @@ describe('TransactionService', () => {
   let mockCustomerService: any;
   let mockWompiService: any;
   let mockConfigService: any;
-
-  const mockTransaction: Transaction = {
-    id: '1',
-    customer: {
-      id: 'cust1',
-      name: 'John Doe',
-      email: 'john@example.com',
-      phone: '1234567890',
-      address: '123 Main St',
-      city: 'Test City',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    product: {
-      id: 'prod1',
-      name: 'Test Product',
-      description: 'Test',
-      price: 100000,
-      stock: 10,
-      category: 'electronics',
-      imageUrl: 'test.jpg',
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    delivery: {
-      id: 'del1',
-      address: '123 Main St',
-      city: 'Test City',
-      department: 'Test Dept',
-      country: 'Test Country',
-      instructions: 'Test instructions',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    quantity: 1,
-    amount: 100000,
-    status: TransactionStatus.PENDING,
-    paymentMethod: 'CARD',
-    paymentReference: 'ref123',
-    paymentResponse: {},
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
 
   beforeEach(async () => {
     mockRepository = {
@@ -143,10 +100,10 @@ describe('TransactionService', () => {
     it('should return a transaction when found', async () => {
       mockRepository.findById.mockResolvedValue(mockTransaction);
 
-      const result = await service.findById('1');
+      const result = await service.findById(mockTransaction.id);
 
       expect(result).toEqual(mockTransaction);
-      expect(mockRepository.findById).toHaveBeenCalledWith('1');
+      expect(mockRepository.findById).toHaveBeenCalledWith(mockTransaction.id);
     });
 
     it('should throw error when transaction not found', async () => {
@@ -184,23 +141,15 @@ describe('TransactionService', () => {
 
   describe('create', () => {
     it('should create a new transaction', async () => {
-      const createDto = {
-        customerId: 'cust1',
-        productId: 'prod1',
-        quantity: 2,
-        baseFee: 5000,
-        deliveryFee: 10000,
-      };
-
       mockCustomerService.findById.mockResolvedValue(mockTransaction.customer);
       mockProductService.findById.mockResolvedValue(mockTransaction.product);
       mockRepository.create.mockResolvedValue(mockTransaction);
 
-      const result = await service.create(createDto);
+      const result = await service.create(mockCreateTransactionDto);
 
       expect(result).toEqual(mockTransaction);
-      expect(mockCustomerService.findById).toHaveBeenCalledWith('cust1');
-      expect(mockProductService.findById).toHaveBeenCalledWith('prod1');
+      expect(mockCustomerService.findById).toHaveBeenCalledWith(mockCreateTransactionDto.customerId);
+      expect(mockProductService.findById).toHaveBeenCalledWith(mockCreateTransactionDto.productId);
       expect(mockRepository.create).toHaveBeenCalled();
     });
   });
@@ -210,9 +159,9 @@ describe('TransactionService', () => {
       mockRepository.findById.mockResolvedValue(mockTransaction);
       mockRepository.delete.mockResolvedValue(undefined);
 
-      await service.delete('1');
+      await service.delete(mockTransaction.id);
 
-      expect(mockRepository.delete).toHaveBeenCalledWith('1');
+      expect(mockRepository.delete).toHaveBeenCalledWith(mockTransaction.id);
     });
   });
 

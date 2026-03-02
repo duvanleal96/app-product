@@ -5,21 +5,7 @@ import {
   Transaction,
   TransactionStatus,
 } from '../../domain/entities/transaction.entity';
-
-const mockTransaction: Partial<Transaction> = {
-  id: '123e4567-e89b-12d3-a456-426614174000',
-  quantity: 2,
-  unitPrice: 100000,
-  subtotal: 200000,
-  baseFee: 2000,
-  deliveryFee: 5000,
-  total: 207000,
-  status: TransactionStatus.PENDING,
-  paymentReference: 'ref123',
-  paymentResponse: null,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
+import { mockTransaction } from '../../test-cases';
 
 const relations = ['product', 'customer', 'delivery'];
 

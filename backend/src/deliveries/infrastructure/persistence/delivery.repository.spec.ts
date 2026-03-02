@@ -1,28 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DeliveryRepository } from './delivery.repository';
-import {
-  Delivery,
-  DeliveryStatus,
-} from '../../domain/entities/delivery.entity';
+import { Delivery, DeliveryStatus } from '../../domain/entities/delivery.entity';
+import { mockDelivery } from '../../test-cases';
 
 describe('DeliveryRepository', () => {
   let repository: DeliveryRepository;
-
-  const mockDelivery: Partial<Delivery> = {
-    id: '1',
-    fullName: 'John Doe',
-    phone: '1234567890',
-    address: '123 Main St',
-    city: 'Test City',
-    department: 'Test Dept',
-    notes: 'Leave at door',
-    status: DeliveryStatus.PENDING,
-    estimatedDeliveryDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
-    deliveredAt: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
 
   const mockTypeormRepository = {
     find: jest.fn(),
@@ -82,11 +65,11 @@ describe('DeliveryRepository', () => {
     it('should return a delivery when found', async () => {
       mockTypeormRepository.findOne.mockResolvedValue(mockDelivery);
 
-      const result = await repository.findById('1');
+      const result = await repository.findById(mockDelivery.id);
 
       expect(result).toEqual(mockDelivery);
       expect(mockTypeormRepository.findOne).toHaveBeenCalledWith({
-        where: { id: '1' },
+        where: { id: mockDelivery.id },
         relations: ['transaction'],
       });
     });
@@ -178,11 +161,11 @@ describe('DeliveryRepository', () => {
       mockTypeormRepository.update.mockResolvedValue({ affected: 1 });
       mockTypeormRepository.findOne.mockResolvedValue(updatedDelivery);
 
-      const result = await repository.update('1', updateData);
+      const result = await repository.update(mockDelivery.id, updateData);
 
       expect(result).toEqual(updatedDelivery);
       expect(mockTypeormRepository.update).toHaveBeenCalledWith(
-        '1',
+        mockDelivery.id,
         updateData,
       );
     });
@@ -201,9 +184,9 @@ describe('DeliveryRepository', () => {
     it('should delete a delivery by id', async () => {
       mockTypeormRepository.delete.mockResolvedValue({ affected: 1 });
 
-      await repository.delete('1');
+      await repository.delete(mockDelivery.id);
 
-      expect(mockTypeormRepository.delete).toHaveBeenCalledWith('1');
+      expect(mockTypeormRepository.delete).toHaveBeenCalledWith(mockDelivery.id);
     });
 
     it('should not throw when deleting non-existent delivery', async () => {

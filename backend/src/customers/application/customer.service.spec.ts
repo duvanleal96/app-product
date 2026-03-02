@@ -1,22 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CustomerService } from './customer.service';
 import { CUSTOMER_REPOSITORY } from '../domain/repositories/customer.repository.interface';
-import { Customer } from '../domain/entities/customer.entity';
+import {
+  mockCustomer,
+  mockCreateCustomerDto,
+  mockUpdateCustomerDto,
+} from '../test-cases';
 
 describe('CustomerService', () => {
   let service: CustomerService;
   let mockRepository: any;
-
-  const mockCustomer: Customer = {
-    id: '1',
-    name: 'John Doe',
-    email: 'john@example.com',
-    phone: '1234567890',
-    address: '123 Main St',
-    city: 'Test City',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
 
   beforeEach(async () => {
     mockRepository = {
@@ -61,10 +54,10 @@ describe('CustomerService', () => {
     it('should return a customer when found', async () => {
       mockRepository.findById.mockResolvedValue(mockCustomer);
 
-      const result = await service.findById('1');
+      const result = await service.findById(mockCustomer.id);
 
       expect(result).toEqual(mockCustomer);
-      expect(mockRepository.findById).toHaveBeenCalledWith('1');
+      expect(mockRepository.findById).toHaveBeenCalledWith(mockCustomer.id);
     });
 
     it('should throw error when customer not found', async () => {
@@ -78,11 +71,11 @@ describe('CustomerService', () => {
     it('should return a customer by email', async () => {
       mockRepository.findByEmail.mockResolvedValue(mockCustomer);
 
-      const result = await service.findByEmail('john@example.com');
+      const result = await service.findByEmail(mockCustomer.email);
 
       expect(result).toEqual(mockCustomer);
       expect(mockRepository.findByEmail).toHaveBeenCalledWith(
-        'john@example.com',
+        mockCustomer.email,
       );
     });
   });
@@ -93,17 +86,11 @@ describe('CustomerService', () => {
       mockRepository.findByEmail.mockResolvedValue(mockCustomer);
       mockRepository.update.mockResolvedValue(updatedCustomer);
 
-      const result = await service.findOrCreate({
-        name: 'John Doe',
-        email: 'john@example.com',
-        phone: '1234567890',
-        address: '123 Main St',
-        city: 'Test City',
-      });
+      const result = await service.findOrCreate(mockCreateCustomerDto);
 
       expect(result).toEqual(updatedCustomer);
       expect(mockRepository.findByEmail).toHaveBeenCalledWith(
-        'john@example.com',
+        mockCreateCustomerDto.email,
       );
       expect(mockRepository.update).toHaveBeenCalled();
       expect(mockRepository.create).not.toHaveBeenCalled();
@@ -111,11 +98,13 @@ describe('CustomerService', () => {
 
     it('should create new customer if not found', async () => {
       const newCustomerDto = {
-        name: 'Jane Doe',
+        fullName: 'Jane Doe',
         email: 'jane@example.com',
         phone: '0987654321',
         address: '456 Oak St',
         city: 'New City',
+        documentType: 'CC',
+        documentNumber: '987654321',
       };
 
       mockRepository.findByEmail.mockResolvedValue(null);
@@ -136,37 +125,27 @@ describe('CustomerService', () => {
 
   describe('create', () => {
     it('should create a new customer', async () => {
-      const createDto = {
-        name: 'New Customer',
-        email: 'new@example.com',
-        phone: '1112223333',
-        address: '789 Pine St',
-        city: 'Another City',
-      };
-      mockRepository.create.mockResolvedValue({
-        ...mockCustomer,
-        ...createDto,
-      });
+      mockRepository.findByEmail.mockResolvedValue(null);
+      mockRepository.create.mockResolvedValue(mockCustomer);
 
-      const result = await service.create(createDto);
+      const result = await service.create(mockCreateCustomerDto);
 
-      expect(result.email).toBe(createDto.email);
-      expect(mockRepository.create).toHaveBeenCalledWith(createDto);
+      expect(result.email).toBe(mockCreateCustomerDto.email);
+      expect(mockRepository.create).toHaveBeenCalledWith(mockCreateCustomerDto);
     });
   });
 
   describe('update', () => {
     it('should update an existing customer', async () => {
-      const updateDto = { name: 'Updated Name' };
-      const updatedCustomer = { ...mockCustomer, ...updateDto };
+      const updatedCustomer = { ...mockCustomer, ...mockUpdateCustomerDto };
 
       mockRepository.findById.mockResolvedValue(mockCustomer);
       mockRepository.update.mockResolvedValue(updatedCustomer);
 
-      const result = await service.update('1', updateDto);
+      const result = await service.update(mockCustomer.id, mockUpdateCustomerDto);
 
-      expect(result.name).toBe('Updated Name');
-      expect(mockRepository.update).toHaveBeenCalledWith('1', updateDto);
+      expect(result.fullName).toBe(mockUpdateCustomerDto.fullName);
+      expect(mockRepository.update).toHaveBeenCalledWith(mockCustomer.id, mockUpdateCustomerDto);
     });
   });
 
@@ -175,9 +154,9 @@ describe('CustomerService', () => {
       mockRepository.findById.mockResolvedValue(mockCustomer);
       mockRepository.delete.mockResolvedValue(undefined);
 
-      await service.delete('1');
+      await service.delete(mockCustomer.id);
 
-      expect(mockRepository.delete).toHaveBeenCalledWith('1');
+      expect(mockRepository.delete).toHaveBeenCalledWith(mockCustomer.id);
     });
   });
 });

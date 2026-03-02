@@ -2,28 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { DeliveryController } from './delivery.controller';
 import { DeliveryService } from '../../application/delivery.service';
 import { UpdateDeliveryDto } from '../../application/dto/update-delivery.dto';
-import {
-  Delivery,
-  DeliveryStatus,
-} from '../../domain/entities/delivery.entity';
+import { DeliveryStatus } from '../../domain/entities/delivery.entity';
+import { mockDelivery, mockUpdateDeliveryDto } from '../../test-cases';
 
 describe('DeliveryController', () => {
   let controller: DeliveryController;
-
-  const mockDelivery: Partial<Delivery> = {
-    id: '123e4567-e89b-12d3-a456-426614174000',
-    fullName: 'John Doe',
-    phone: '1234567890',
-    address: '123 Main St',
-    city: 'Test City',
-    department: 'Test Dept',
-    notes: 'Leave at door',
-    status: DeliveryStatus.PENDING,
-    estimatedDeliveryDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
-    deliveredAt: new Date(),
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
 
   const mockDeliveryService = {
     findAll: jest.fn(),
@@ -130,31 +113,21 @@ describe('DeliveryController', () => {
 
   describe('update', () => {
     it('should update a delivery', async () => {
-      const updateDto: UpdateDeliveryDto = {
-        address: '456 New St',
-        city: 'New City',
-        status: DeliveryStatus.IN_TRANSIT,
-      };
-
-      const updatedDelivery = { ...mockDelivery, ...updateDto };
+      const updatedDelivery = { ...mockDelivery, ...mockUpdateDeliveryDto };
       mockDeliveryService.update.mockResolvedValue(updatedDelivery);
 
-      const result = await controller.update(mockDelivery.id, updateDto);
+      const result = await controller.update(mockDelivery.id, mockUpdateDeliveryDto);
 
       expect(result).toEqual(updatedDelivery);
       expect(mockDeliveryService.update).toHaveBeenCalledWith(
         mockDelivery.id,
-        updateDto,
+        mockUpdateDeliveryDto,
       );
     });
 
     it('should update only the status', async () => {
       const updateDto: UpdateDeliveryDto = { status: DeliveryStatus.DELIVERED };
-      const updatedDelivery = {
-        ...mockDelivery,
-        status: DeliveryStatus.DELIVERED,
-        deliveredAt: new Date(),
-      };
+      const updatedDelivery = { ...mockDelivery, status: DeliveryStatus.DELIVERED, deliveredAt: new Date() };
 
       mockDeliveryService.update.mockResolvedValue(updatedDelivery);
 
