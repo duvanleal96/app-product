@@ -42,6 +42,9 @@ export class Transaction extends BaseEntity {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   total: number;
 
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  vatFee: number;
+
   @Column({
     type: 'enum',
     enum: TransactionStatus,

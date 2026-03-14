@@ -66,6 +66,7 @@ export const mockTransaction: Transaction = {
   delivery: mockDelivery,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
+  vatFee: 0,
 };
 
 mockDelivery.transaction = mockTransaction;

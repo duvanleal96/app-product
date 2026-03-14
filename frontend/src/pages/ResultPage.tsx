@@ -143,6 +143,10 @@ export const ResultPage = () => {
                   <span className="font-medium">{formatPrice(transaction.baseFee)}</span>
                 </div>
               )}
+               <div className="flex justify-between">
+                  <span className="text-gray-600">IVA:</span>
+                  <span className="font-medium">{formatPrice(transaction.vatFee)}</span>
+                </div>
               <hr />
               <div className="flex justify-between text-lg">
                 <span className="font-bold">Total:</span>

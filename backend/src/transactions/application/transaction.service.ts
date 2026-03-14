@@ -163,13 +163,14 @@ export class TransactionService {
 
       const unitPrice = Number(product.price);
       const subtotal = unitPrice * quantity;
+      const vatFee = subtotal * 0.19;
       const finalBaseFee =
         baseFee ||
         (this.configService.get<number>('fees.baseFee') ?? 2000) / 100;
       const finalDeliveryFee =
         deliveryFee ||
         (this.configService.get<number>('fees.deliveryFee') ?? 5000) / 100;
-      const total = subtotal + finalBaseFee + finalDeliveryFee;
+      const total = subtotal + finalBaseFee + finalDeliveryFee + vatFee;
 
       const transaction = await this.transactionRepository.create({
         product,
@@ -177,6 +178,7 @@ export class TransactionService {
         quantity,
         unitPrice,
         subtotal,
+        vatFee,
         baseFee: finalBaseFee,
         deliveryFee: finalDeliveryFee,
         total,
@@ -272,6 +274,12 @@ export class TransactionService {
           phone_number: transaction.customer.phone,
           full_name: transaction.customer.fullName,
         },
+        taxes: [
+          {
+            type: 'VAT',
+            amount_in_cents: Math.round(transaction.vatFee * 100),
+          },
+        ],
       });
 
       this.logger.log(

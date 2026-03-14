@@ -25,6 +25,7 @@ const CHECKOUT_STEPS = ['Producto', 'Datos', 'Pago', 'Confirmación'];
 // Fees configuration
 const BASE_FEE = 5000; // Comisión base: $5,000 COP
 const DELIVERY_FEE = 10000; // Costo de envío: $10,000 COP
+const VAT_FEE_PERCENTAGE = 19; // IVA: 19%
 
 export const PaymentPage = () => {
   const navigate = useNavigate();
@@ -36,7 +37,9 @@ export const PaymentPage = () => {
 
   // Calculate totals
   const subtotal = total;
-  const totalWithFees = subtotal + BASE_FEE + DELIVERY_FEE;
+  const vatFee = Math.round((subtotal * VAT_FEE_PERCENTAGE) / 100);
+  const totalWithFees = subtotal + BASE_FEE + DELIVERY_FEE + vatFee;
+
 
   const [localCardInfo, setLocalCardInfo] = useState({
     cardNumber: cardInfo?.cardNumber || '',
@@ -620,6 +623,10 @@ export const PaymentPage = () => {
                   <div className="text-xs text-gray-600 mb-1 flex justify-between">
                     <span>Costo de envío:</span>
                     <span className="font-medium">{formatPrice(DELIVERY_FEE)}</span>
+                  </div>
+                     <div className="text-xs text-gray-600 mb-1 flex justify-between">
+                    <span>Iva:</span>
+                    <span className="font-medium">{formatPrice(vatFee)}</span>
                   </div>
                   
                   {/* Total */}

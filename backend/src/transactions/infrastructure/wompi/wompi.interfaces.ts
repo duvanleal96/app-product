@@ -21,6 +21,12 @@ export interface WompiTransactionRequest {
     full_name?: string;
   };
   redirect_url?: string;
+  taxes?: [
+    {
+      type: string;
+      amount_in_cents: number;
+    },
+  ];
 }
 
 export interface WompiTransactionResponse {
